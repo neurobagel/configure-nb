@@ -3,8 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatch-vcs", "hatchling"]
 
 [project]
-# TODO: Replace app-name
-name = "app-name"
+name = "configure-nb"
 dynamic = ["version"]
 license = { file = "LICENSE" }
 authors = [{ name = "Neurobagel Developers" }]
@@ -28,7 +27,8 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-  # TODO: Add runtime dependencies
+  "typer",
+  "pydantic"
 ]
 
 [project.optional-dependencies]
@@ -36,14 +36,11 @@ test = [
   "pytest",
   "pytest-cov",
 ]
-# TODO: Replace app-name
-dev = ["app-name[test]", "pre-commit"]
+dev = ["configure-nb[test]", "pre-commit"]
 
-# ---- CLI-only config ----
-# [project.scripts]
-# # TODO: Replace entrypoint
-# app-name = "app_name.cli:main"
-# -------------------------
+[project.scripts]
+# TODO: Replace entrypoint
+configure-nb = "configure_nb.cli:configure_nb"
 
 # ---- Packaging-only config ----
 # [tool.hatch.build.targets.wheel]
@@ -58,8 +55,7 @@ dev = ["app-name[test]", "pre-commit"]
 source = "vcs"  # use git tags to automatically determine the project version using hatch-vcs
 
 [tool.hatch.build.hooks.vcs]
-# TODO: Replace app-name
-version-file = "app-name/_version.py"  # useful for accessing dynamically calculated version inside the app (e.g., to support a --version option)
+version-file = "configure_nb/_version.py"  # useful for accessing dynamically calculated version inside the app (e.g., to support a --version option)
 
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"  # do not append local version info to the version string to avoid PyPI upload errors
