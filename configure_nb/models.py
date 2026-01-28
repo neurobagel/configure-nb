@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Graph(BaseModel):
@@ -79,22 +79,30 @@ class Experimental(BaseModel):
     ]
 
 
-class Compose(BaseModel):
-    profile = Annotated[
-        str, Field(alias="COMPOSE_PROFILES", default="local_node")
+class NodeCompose(BaseModel):
+    profile: Literal["local_node"] = "local_node"
+    project_name = Annotated[
+        str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
+
+
+class PortalCompose(BaseModel):
+    profile: Literal["local_federation"] = "local_federation"
     project_name = Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
 
 
 class Node(BaseModel):
-    profile: Literal["local_node"] = "local_node"
     service_node_api = Annotated[
-        NodeAPI | None, Field(alias="service:node-api", default=None)
+        NodeAPI | None,
+        Field(alias="service:node-api", default_factory=NodeAPI),
     ]
     service_graph = Annotated[
-        Graph | None, Field(alias="service:graph", default=None)
+        Graph | None, Field(alias="service:graph", default_factory=Graph)
+    ]
+    compose = Annotated[
+        NodeCompose | None, Field(alias="compose", default_factory=NodeCompose)
     ]
 
 
@@ -106,13 +114,17 @@ class Portal(BaseModel):
     service_query = Annotated[
         Query | None, Field(alias="service:query", default=None)
     ]
+    compose = Annotated[
+        PortalCompose | None,
+        Field(alias="compose", default_factory=PortalCompose),
+    ]
 
 
-# class IniFile(RootModel[])
+class IniFile(RootModel[Node | Portal]):
+    pass
+
 
 # Profile options:
-# - node and/or graph
-# - federation and/or query
-# - node and/or graph and/or federation and/or query
-
-# - no config.ini
+# - local node: node and/or graph
+# - local federation: federation and/or query
+# - full stack: node and/or graph and/or federation and/or query
