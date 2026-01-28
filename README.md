@@ -15,14 +15,16 @@ Configuration wizard for a Neurobagel deployment.
 ## Development environment
 
 ### Setting up a local development environment
-1. Clone the repository
+1. Set up a Python environment (using a tool such as [venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#create-and-use-virtual-environments)).
+
+2. Clone the repository
 
     ```bash
     git clone https://github.com/neurobagel/configure-nb.git
     cd configure-nb
     ```
 
-2. Install the CLI and all development dependencies in editable mode:
+3. Install the CLI and all development dependencies in editable mode:
 
     ```bash
     pip install -e ".[dev]"
