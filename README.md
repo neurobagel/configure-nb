@@ -1,42 +1,47 @@
 <div align="center">
 
-# py-app-template
-Template for Neurobagel Python app, for use by Neurobagel maintainers.
+# `configure-nb`
 
-[![Main branch checks status](https://img.shields.io/github/check-runs/neurobagel/py-app-template/main?style=flat-square&logo=github)](https://github.com/neurobagel/py-app-template/actions?query=branch:main)
-[![Tests status](https://img.shields.io/github/actions/workflow/status/neurobagel/py-app-template/test.yaml?branch=main&style=flat-square&logo=github&label=tests)](https://github.com/neurobagel/py-app-template/actions/workflows/test.yaml)
-[![Codecov](https://img.shields.io/codecov/c/github/neurobagel/py-app-template?token=Vn1do0lrCl&style=flat-square&logo=codecov&link=https%3A%2F%2Fcodecov.io%2Fgh%2Fneurobagel%2Fpy-app-template)](https://app.codecov.io/gh/neurobagel/py-app-template)
+[![Main branch checks status](https://img.shields.io/github/check-runs/neurobagel/configure-nb/main?style=flat-square&logo=github)](https://github.com/neurobagel/configure-nb/actions?query=branch:main)
+[![Tests status](https://img.shields.io/github/actions/workflow/status/neurobagel/configure-nb/test.yaml?branch=main&style=flat-square&logo=github&label=tests)](https://github.com/neurobagel/configure-nb/actions/workflows/test.yaml)
+[![Codecov](https://img.shields.io/codecov/c/github/neurobagel/configure-nb?token=Vn1do0lrCl&style=flat-square&logo=codecov&link=https%3A%2F%2Fcodecov.io%2Fgh%2Fneurobagel%2Fconfigure-nb)](https://app.codecov.io/gh/neurobagel/configure-nb)
 [![Python versions static](https://img.shields.io/badge/python-3.10--3.14-blue?style=flat-square&logo=python)](https://www.python.org)
-[![License](https://img.shields.io/github/license/neurobagel/py-app-template?style=flat-square&color=purple&link=LICENSE)](LICENSE)
+[![License](https://img.shields.io/github/license/neurobagel/configure-nb?style=flat-square&color=purple&link=LICENSE)](LICENSE)
 
 </div>
 
-> [!WARNING]
-> This template repo contains no application code directory and cannot be installed as-is.
+Configuration wizard for a Neurobagel deployment.
 
-## To finish creating a new repo from this template
-- [Enable pre-commit ci](https://github.com/organizations/neurobagel/settings/installations/45014819) for the new repo
-- Once you have created your main application code directory
-  - in `pyproject.toml`, follow the `#TODO` comments to replace the app name placeholders
-  - in `.github/workflows/test.yaml`, uncomment the steps to run the tests and upload coverage
+## Development environment
 
-### If the app is a CLI tool
-- In `pyproject.toml`, uncomment the section for CLI-only config
+### Setting up a local development environment
+1. Set up a Python environment (using a tool such as [venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#create-and-use-virtual-environments)).
 
-### If releasing the package on PyPI
-- In `pyproject.toml`, uncomment the section for packaging-only config
-- In the [neurobagel/workflows sync config](https://github.com/neurobagel/workflows/blob/main/.github/sync.yml), add the new repo to the sync groups for auto-releasing Python projects on PyPI
-- add PyPI badges for version and downloads, e.g.:
-[![PyPI - Version](https://img.shields.io/pypi/v/bagel?style=flat-square&logo=pypi&link=https%3A%2F%2Fimg.shields.io%2Fpypi%2Fv%2Fbagel)](https://pypi.org/project/bagel/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/bagel?style=flat-square&logo=python&label=pypi%20downloads&link=https%3A%2F%2Fpypistats.org%2Fpackages%2Fbagel)](https://pypistats.org/packages/bagel)
+2. Clone the repository
 
-## Provided in this template
-- Project configuration via pyproject.toml
-- pre-commit
-- Code formatting and linting config:
-  - flake8
-  - black
-  - isort
-  - codespell
-- pytest and code coverage with CodeCov integration
-- `auto` configuration for automated releases
+    ```bash
+    git clone https://github.com/neurobagel/configure-nb.git
+    cd configure-nb
+    ```
+
+3. Install the CLI and all development dependencies in editable mode:
+
+    ```bash
+    pip install -e ".[dev]"
+    ```
+
+Confirm that everything works by running the tests: 
+`pytest`
+
+### Setting up code formatting and linting (recommended)
+
+[pre-commit](https://pre-commit.com/) is configured in the development environment for this repository, 
+and can be set up to automatically run a number of code linters and formatters on any commit you make 
+according to the consistent code style set for this project.
+
+Inside the repo, run the following to install the configured pre-commit "hooks":
+```bash
+pre-commit install
+```
+
+pre-commit will now run automatically whenever you run `git commit`.
