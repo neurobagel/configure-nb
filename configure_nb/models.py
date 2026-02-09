@@ -9,7 +9,7 @@ class Graph(BaseModel):
         str, Field(alias="NB_GRAPH_USERNAME", default="DBUSER")
     ]
     graph_db: Annotated[
-        str, Field(alias="NB_GRAPH_DB", default="repository/my_db")
+        str, Field(alias="NB_GRAPH_DB", default="repositories/my_db")
     ]
     graph_data: Annotated[Path, Field(alias="NB_GRAPH_DATA", default="./data")]
     graph_port_host: Annotated[
@@ -18,9 +18,7 @@ class Graph(BaseModel):
     graph_secrets_path: Annotated[
         Path, Field(alias="NB_GRAPH_SECRETS_PATH", default="./secrets")
     ]
-    graph_memory: Annotated[
-        str, Field(alias="NB_GRAPH_MEMORY", default="./2G")
-    ]
+    graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 
 
 class NodeAPI(BaseModel):
@@ -59,11 +57,11 @@ class Query(BaseModel):
         str, Field(alias="NB_QUERY_APP_BASE_PATH", default="/")
     ]
     query_port_host: Annotated[
-        str, Field(alias="NB_QUERY_PORT_HOST", default="3080")
+        str, Field(alias="NB_QUERY_PORT_HOST", default="3000")
     ]
     # TODO: Ensure that this variable is not exported to the output .env if set to None
     query_header_script = Annotated[
-        str,
+        str | None,
         Field(
             alias="NB_QUERY_HEADER_SCRIPT",
             default=None,
@@ -93,6 +91,7 @@ class PortalCompose(BaseModel):
     ]
 
 
+# TODO: Check None type
 class Node(BaseModel):
     service_node_api = Annotated[
         NodeAPI | None,
@@ -109,10 +108,11 @@ class Node(BaseModel):
 class Portal(BaseModel):
     profile: Literal["local_federation"] = "local_federation"
     service_federation_api = Annotated[
-        FedAPI | None, Field(alias="service:federation-api", default=None)
+        FedAPI | None,
+        Field(alias="service:federation-api", default_factory=FedAPI),
     ]
     service_query = Annotated[
-        Query | None, Field(alias="service:query", default=None)
+        Query | None, Field(alias="service:query", default_factory=Query)
     ]
     compose = Annotated[
         PortalCompose | None,
