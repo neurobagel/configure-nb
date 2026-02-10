@@ -32,8 +32,8 @@ class NodeAPI(BaseModel):
     napi_min_cell_size: Annotated[
         int, Field(alias="NB_MIN_CELL_SIZE", default=0)
     ]
-    napi_tag = Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
-    config = Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
+    napi_tag: Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
+    config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
 class FedAPI(BaseModel):
@@ -46,21 +46,21 @@ class FedAPI(BaseModel):
     federate_remote_public_nodes: Annotated[
         bool, Field(alias="NB_FEDERATE_REMOTE_PUBLIC_NODES", default=True)
     ]
-    fapi_tag = Annotated[str, Field(alias="NB_FAPI_TAG", default="latest")]
+    fapi_tag: Annotated[str, Field(alias="NB_FAPI_TAG", default="latest")]
 
 
 class Query(BaseModel):
-    api_query_url = Annotated[
+    api_query_url: Annotated[
         str, Field(alias="NB_API_QUERY_URL", default="http://localhost:8080")
     ]
-    query_app_base_path = Annotated[
+    query_app_base_path: Annotated[
         str, Field(alias="NB_QUERY_APP_BASE_PATH", default="/")
     ]
     query_port_host: Annotated[
         str, Field(alias="NB_QUERY_PORT_HOST", default="3000")
     ]
     # TODO: Ensure that this variable is not exported to the output .env if set to None
-    query_header_script = Annotated[
+    query_header_script: Annotated[
         str | None,
         Field(
             alias="NB_QUERY_HEADER_SCRIPT",
@@ -70,51 +70,51 @@ class Query(BaseModel):
 
 
 class Experimental(BaseModel):
-    enable_auth = Annotated[bool, Field(alias="NB_ENABLE_AUTH", default=False)]
+    enable_auth: Annotated[bool, Field(alias="NB_ENABLE_AUTH", default=False)]
     # TODO: Ensure that this variable is not exported to the output .env if set to None
-    query_client_id = Annotated[
+    query_client_id: Annotated[
         str | None, Field(alias="NB_QUERY_CLIENT_ID", default=None)
     ]
 
 
 class NodeCompose(BaseModel):
     profile: Literal["local_node"] = "local_node"
-    project_name = Annotated[
+    project_name: Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
 
 
 class PortalCompose(BaseModel):
     profile: Literal["local_federation"] = "local_federation"
-    project_name = Annotated[
+    project_name: Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
 
 
 # TODO: Check None type
 class Node(BaseModel):
-    service_node_api = Annotated[
+    service_node_api: Annotated[
         NodeAPI | None,
         Field(alias="service:node-api", default_factory=NodeAPI),
     ]
-    service_graph = Annotated[
+    service_graph: Annotated[
         Graph | None, Field(alias="service:graph", default_factory=Graph)
     ]
-    compose = Annotated[
+    compose: Annotated[
         NodeCompose | None, Field(alias="compose", default_factory=NodeCompose)
     ]
 
 
 class Portal(BaseModel):
     profile: Literal["local_federation"] = "local_federation"
-    service_federation_api = Annotated[
+    service_federation_api: Annotated[
         FedAPI | None,
         Field(alias="service:federation-api", default_factory=FedAPI),
     ]
-    service_query = Annotated[
+    service_query: Annotated[
         Query | None, Field(alias="service:query", default_factory=Query)
     ]
-    compose = Annotated[
+    compose: Annotated[
         PortalCompose | None,
         Field(alias="compose", default_factory=PortalCompose),
     ]
