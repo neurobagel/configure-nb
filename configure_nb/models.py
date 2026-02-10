@@ -78,14 +78,20 @@ class Experimental(BaseModel):
 
 
 class NodeCompose(BaseModel):
-    profile: Literal["local_node"] = "local_node"
+    profile: Annotated[
+        Literal["local_node"],
+        Field(alias="COMPOSE_PROFILES", default="local_node"),
+    ]
     project_name: Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
 
 
 class PortalCompose(BaseModel):
-    profile: Literal["local_federation"] = "local_federation"
+    profile: Annotated[
+        Literal["local_federation"],
+        Field(alias="COMPOSE_PROFILES", default="local_federation"),
+    ]
     project_name: Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
     ]
@@ -106,7 +112,6 @@ class Node(BaseModel):
 
 
 class Portal(BaseModel):
-    profile: Literal["local_federation"] = "local_federation"
     service_federation_api: Annotated[
         FedAPI | None,
         Field(alias="service:federation-api", default_factory=FedAPI),
