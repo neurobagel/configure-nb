@@ -120,7 +120,7 @@ class Portal(BaseModel):
     ]
 
 
-class IniFile(RootModel[Node | Portal]):
+class ConfigFile(RootModel[Node | Portal]):
     pass
 
 
