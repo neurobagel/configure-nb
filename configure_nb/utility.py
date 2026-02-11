@@ -33,8 +33,11 @@ def load_ini(file_path: Path) -> dict:
 
 def write_config_to_env_file(config: ConfigFile, out_file: Path) -> None:
     with open(out_file, "w", encoding="utf-8") as env_file:
-        for section_vars in config.model_dump(by_alias=True).values():
-            # Add a newline before each section for readability
-            env_file.write("\n")
+        for section_num, section_vars in enumerate(
+            config.model_dump(by_alias=True).values()
+        ):
+            if section_num > 0:
+                # Add a newline after each section for readability
+                env_file.write("\n")
             for key, value in section_vars.items():
                 env_file.write(f"{key}={value}\n")
