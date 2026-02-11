@@ -3,11 +3,13 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, Field, RootModel
 
+# from enum import Enum
+
 
 def path_has_leading_slash(path: str) -> str:
     # TODO: Should we prepend the leading slash automatically?
     if path and not path.startswith("/"):
-        raise ValueError("Path must start with a leading slash.")
+        raise ValueError("Base path must start with a leading slash.")
     return path
 
 
@@ -114,10 +116,25 @@ class Experimental(BaseModel):
     ]
 
 
+# class ProfileEnum(str, Enum):
+#     NODE = "node"
+#     PORTAL = "portal"
+
+#     @classmethod
+#     def get_values(cls) -> list[str]:
+#         return [member.value for member in cls]
+
+# class ComposeProfile(BaseModel):
+#     profile: Annotated[
+#         ProfileEnum,
+#         Field(alias="COMPOSE_PROFILES"),
+#     ]
+
+
 class NodeCompose(BaseModel):
     profile: Annotated[
-        Literal["local_node"],
-        Field(alias="COMPOSE_PROFILES", default="local_node"),
+        Literal["node"],
+        Field(alias="COMPOSE_PROFILES", default="node"),
     ]
     project_name: Annotated[
         str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
@@ -126,47 +143,74 @@ class NodeCompose(BaseModel):
 
 class PortalCompose(BaseModel):
     profile: Annotated[
-        Literal["local_federation"],
-        Field(alias="COMPOSE_PROFILES", default="local_federation"),
+        Literal["portal"],
+        Field(alias="COMPOSE_PROFILES", default="portal"),
     ]
     project_name: Annotated[
-        str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_node")
+        str, Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_portal")
     ]
 
 
-# TODO: Check None type
+class TestingCompose(BaseModel):
+    project_name: Annotated[
+        str,
+        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_full_stack"),
+    ]
+
+
 class Node(BaseModel):
     service_node_api: Annotated[
-        NodeAPI | None,
+        NodeAPI,
         Field(alias="service:node-api", default_factory=NodeAPI),
     ]
     service_graph: Annotated[
-        Graph | None, Field(alias="service:graph", default_factory=Graph)
+        Graph, Field(alias="service:graph", default_factory=Graph)
     ]
     compose: Annotated[
-        NodeCompose | None, Field(alias="compose", default_factory=NodeCompose)
+        NodeCompose, Field(alias="compose", default_factory=NodeCompose)
     ]
 
 
 class Portal(BaseModel):
     service_federation_api: Annotated[
-        FedAPI | None,
+        FedAPI,
         Field(alias="service:federation-api", default_factory=FedAPI),
     ]
     service_query: Annotated[
-        Query | None, Field(alias="service:query", default_factory=Query)
+        Query, Field(alias="service:query", default_factory=Query)
     ]
     compose: Annotated[
-        PortalCompose | None,
+        PortalCompose,
         Field(alias="compose", default_factory=PortalCompose),
     ]
 
 
-class ConfigFile(RootModel[Node | Portal]):
+class Testing(BaseModel):
+    service_node_api: Annotated[
+        NodeAPI,
+        Field(alias="service:node-api", default_factory=NodeAPI),
+    ]
+    service_graph: Annotated[
+        Graph, Field(alias="service:graph", default_factory=Graph)
+    ]
+    service_federation_api: Annotated[
+        FedAPI,
+        Field(alias="service:federation-api", default_factory=FedAPI),
+    ]
+    service_query: Annotated[
+        Query, Field(alias="service:query", default_factory=Query)
+    ]
+    compose: Annotated[
+        TestingCompose,
+        Field(alias="compose", default_factory=TestingCompose),
+    ]
+
+
+class ConfigFile(RootModel[Node | Portal | Testing]):
     pass
 
 
-# Profile options:
-# - local node: node and/or graph
-# - local federation: federation and/or query
-# - full stack: node and/or graph and/or federation and/or query
+COMPOSE_PROFILE_TO_CLASS_MAP = {
+    "node": Node,
+    "portal": Portal,
+}
