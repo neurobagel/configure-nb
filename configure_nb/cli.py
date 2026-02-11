@@ -1,12 +1,13 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Type
 
 import pydantic
 import typer
+from pydantic import BaseModel
 
 from . import utility as util
 from .logger import VerbosityLevel, configure_logger, log_error, logger
-from .models import ConfigFile
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, Testing
 
 configure_nb = typer.Typer()
 
@@ -59,20 +60,35 @@ def main(
         )
         ini_contents = {}
 
+    compose_profile = ini_contents.get("compose", {}).get("COMPOSE_PROFILES")
     try:
-        config = ConfigFile.model_validate(ini_contents)
+        if not compose_profile:
+            logger.info(
+                "The COMPOSE_PROFILES variable was not set. Defaulting to a testing deployment configuration."
+            )
+            config = Testing.model_validate(ini_contents)
+        else:
+            config_class: Type[BaseModel] | None = (
+                COMPOSE_PROFILE_TO_CLASS_MAP.get(compose_profile)
+            )
+            if not config_class:
+                log_error(
+                    logger,
+                    f"Unrecognized COMPOSE_PROFILES value: {compose_profile}. "
+                    f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
+                )
+            logger.info(f"Deployment configuration: {compose_profile}")
+            config = config_class.model_validate(ini_contents)
     except pydantic.ValidationError as err:
         if config_file:
-            err_message = f"{config_file.name} is not a valid Neurobagel configuration file."
+            # TODO: Can customize validation error from Pydantic to be more user friendly
+            err_message = f"There are problems with configuration values in {config_file.name}. Please check your configuration."
         else:
             err_message = (
                 "Failed to apply default configuration values. "
                 "This is unexpected - please report the issue at https://github.com/neurobagel/configure-nb/issues."
             )
         log_error(logger, f"{err_message}\nValidation details:\n {err}")
-
-    # TODO: Remove for debugging
-    print(config)
 
     # env_vars = util.flatten_config_to_dict(config)
     util.write_config_to_env_file(config, output_file)

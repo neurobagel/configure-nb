@@ -154,7 +154,7 @@ class PortalCompose(BaseModel):
 class TestingCompose(BaseModel):
     project_name: Annotated[
         str,
-        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_full_stack"),
+        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_testing"),
     ]
 
 
