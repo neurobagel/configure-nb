@@ -15,17 +15,17 @@ configure_nb = typer.Typer()
 @configure_nb.command()
 def main(
     config_file: Annotated[
-        Path | None,
+        Path,
         typer.Option(
             "--config-file",
             "-c",
             help="Path to a configuration file (.ini).",
-            exists=True,
+            exists=False,
             file_okay=True,
             dir_okay=False,
             resolve_path=True,
         ),
-    ] = None,
+    ] = Path("nb_config.ini"),
     output_file: Annotated[
         Path,
         typer.Option(
@@ -51,7 +51,7 @@ def main(
     """
     Generate a valid .env file for Neurobagel deployment configuration.
     """
-    if config_file:
+    if config_file.exists():
         logger.info(f"Loading configuration from file: {config_file}")
         ini_contents = util.load_ini(config_file)
     else:
@@ -80,7 +80,7 @@ def main(
             logger.info(f"Deployment configuration: {compose_profile}")
             config = config_class.model_validate(ini_contents)
     except pydantic.ValidationError as err:
-        if config_file:
+        if config_file.exists():
             # TODO: Can customize validation error from Pydantic to be more user friendly
             err_message = f"There are problems with configuration values in {config_file.name}. Please check your configuration."
         else:
