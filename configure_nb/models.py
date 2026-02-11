@@ -1,7 +1,22 @@
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import AfterValidator, BaseModel, Field, RootModel
+
+
+def path_has_leading_slash(path: str) -> str:
+    # TODO: Should we prepend the leading slash automatically?
+    if path and not path.startswith("/"):
+        raise ValueError("Path must start with a leading slash.")
+    return path
+
+
+def domain_has_no_protocol(domain: str) -> str:
+    if domain.startswith(("http://", "https://")):
+        raise ValueError(
+            "Domain name must not include a protocol (http:// or https://)."
+        )
+    return domain
 
 
 class Graph(BaseModel):
@@ -24,7 +39,14 @@ class Graph(BaseModel):
 class NodeAPI(BaseModel):
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
     napi_base_path: Annotated[
-        str, Field(alias="NB_NAPI_BASE_PATH", default="")
+        str,
+        Field(alias="NB_NAPI_BASE_PATH", default=""),
+        AfterValidator(path_has_leading_slash),
+    ]
+    napi_domain: Annotated[
+        str,
+        Field(alias="NB_NAPI_DOMAIN", default=""),
+        AfterValidator(domain_has_no_protocol),
     ]
     napi_port_host: Annotated[
         str, Field(alias="NB_NAPI_PORT_HOST", default="8000")
@@ -38,7 +60,14 @@ class NodeAPI(BaseModel):
 
 class FedAPI(BaseModel):
     fapi_base_path: Annotated[
-        str, Field(alias="NB_FAPI_BASE_PATH", default="")
+        str,
+        Field(alias="NB_FAPI_BASE_PATH", default=""),
+        AfterValidator(path_has_leading_slash),
+    ]
+    fapi_domain: Annotated[
+        str,
+        Field(alias="NB_FAPI_DOMAIN", default=""),
+        AfterValidator(domain_has_no_protocol),
     ]
     fapi_port_host: Annotated[
         str, Field(alias="NB_FAPI_PORT_HOST", default="8080")
@@ -50,11 +79,19 @@ class FedAPI(BaseModel):
 
 
 class Query(BaseModel):
+    # TODO: Consider constructing this URL automatically for production portal deployments?
     api_query_url: Annotated[
         str, Field(alias="NB_API_QUERY_URL", default="http://localhost:8080")
     ]
     query_app_base_path: Annotated[
-        str, Field(alias="NB_QUERY_APP_BASE_PATH", default="/")
+        str,
+        Field(alias="NB_QUERY_APP_BASE_PATH", default="/"),
+        AfterValidator(path_has_leading_slash),
+    ]
+    query_domain: Annotated[
+        str,
+        Field(alias="NB_QUERY_DOMAIN", default=""),
+        AfterValidator(domain_has_no_protocol),
     ]
     query_port_host: Annotated[
         str, Field(alias="NB_QUERY_PORT_HOST", default="3000")
