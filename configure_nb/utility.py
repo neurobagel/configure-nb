@@ -34,10 +34,12 @@ def load_ini(file_path: Path) -> dict:
 def write_config_to_env_file(config: ConfigFile, out_file: Path) -> None:
     with open(out_file, "w", encoding="utf-8") as env_file:
         for section_num, section_vars in enumerate(
-            config.model_dump(by_alias=True).values()
+            # exclude_none useful for experimental variables that we want to omit from the .env file if unset
+            config.model_dump(by_alias=True, exclude_none=True).values()
         ):
             if section_num > 0:
                 # Add a newline after each section for readability
+                # TODO: Can add section headers as comments
                 env_file.write("\n")
             for key, value in section_vars.items():
                 env_file.write(f"{key}={value}\n")
