@@ -1,9 +1,25 @@
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
-from pydantic import AfterValidator, BaseModel, Field, RootModel
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    model_validator,
+)
 
-# from enum import Enum
+from .logger import logger
+
+SERVICE_INI_SECTIONS = {
+    "node-api": "service:node-api",
+    "graph": "service:graph",
+    "federation-api": "service:federation-api",
+    "query": "service:query",
+    "experimental": "service:experimental",
+    "compose": "compose",
+}
 
 
 def path_has_leading_slash(path: str) -> str:
@@ -21,7 +37,36 @@ def domain_has_no_protocol(domain: str) -> str:
     return domain
 
 
-class Graph(BaseModel):
+def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
+    recognized_fields = {
+        field.alias or name for name, field in cls.model_fields.items()
+    }
+    return set(data) - recognized_fields
+
+
+class BaseConfig(BaseModel):
+    ini_section: ClassVar[str]
+
+    model_config = ConfigDict(extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def warn_extra_fields(cls, data):
+        if isinstance(data, dict):
+            if extra_fields := _get_extra_fields(cls, data):
+                logger.warning(
+                    f"Section \\[{cls.ini_section}] contains variables that are not recognized or will not be used by the service:\n"
+                    + "\n".join(
+                        f" - {extra_field}" for extra_field in extra_fields
+                    )
+                    + "\nThese variables will be ignored."
+                )
+        return data
+
+
+class Graph(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["graph"]
+
     graph_username: Annotated[
         str, Field(alias="NB_GRAPH_USERNAME", default="DBUSER")
     ]
@@ -38,7 +83,9 @@ class Graph(BaseModel):
     graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 
 
-class NodeAPI(BaseModel):
+class NodeAPI(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["node-api"]
+
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
     napi_base_path: Annotated[
         str,
@@ -60,7 +107,9 @@ class NodeAPI(BaseModel):
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
-class FedAPI(BaseModel):
+class FedAPI(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["federation-api"]
+
     fapi_base_path: Annotated[
         str,
         Field(alias="NB_FAPI_BASE_PATH", default=""),
@@ -80,7 +129,9 @@ class FedAPI(BaseModel):
     fapi_tag: Annotated[str, Field(alias="NB_FAPI_TAG", default="latest")]
 
 
-class Query(BaseModel):
+class Query(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["query"]
+
     # TODO: Consider constructing this URL automatically for production portal deployments?
     api_query_url: Annotated[
         str, Field(alias="NB_API_QUERY_URL", default="http://localhost:8080")
@@ -108,30 +159,20 @@ class Query(BaseModel):
     ]
 
 
-class Experimental(BaseModel):
+class Experimental(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["experimental"]
+
     enable_auth: Annotated[bool, Field(alias="NB_ENABLE_AUTH", default=False)]
     # TODO: Ensure that this variable is not exported to the output .env if set to None
+    # NOTE: query_client_id is technically only used by the Portal profile
     query_client_id: Annotated[
         str | None, Field(alias="NB_QUERY_CLIENT_ID", default=None)
     ]
 
 
-# class ProfileEnum(str, Enum):
-#     NODE = "node"
-#     PORTAL = "portal"
+class NodeCompose(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["compose"]
 
-#     @classmethod
-#     def get_values(cls) -> list[str]:
-#         return [member.value for member in cls]
-
-# class ComposeProfile(BaseModel):
-#     profile: Annotated[
-#         ProfileEnum,
-#         Field(alias="COMPOSE_PROFILES"),
-#     ]
-
-
-class NodeCompose(BaseModel):
     profile: Annotated[
         Literal["node"],
         Field(alias="COMPOSE_PROFILES", default="node"),
@@ -141,7 +182,9 @@ class NodeCompose(BaseModel):
     ]
 
 
-class PortalCompose(BaseModel):
+class PortalCompose(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["compose"]
+
     profile: Annotated[
         Literal["portal"],
         Field(alias="COMPOSE_PROFILES", default="portal"),
@@ -151,33 +194,67 @@ class PortalCompose(BaseModel):
     ]
 
 
-class TestingCompose(BaseModel):
+class TestingCompose(BaseConfig):
+    ini_section = SERVICE_INI_SECTIONS["compose"]
+
     project_name: Annotated[
         str,
         Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_testing"),
     ]
 
 
-class Node(BaseModel):
+class BaseProfile(BaseModel):
+    service_experimental: Annotated[
+        Experimental,
+        Field(
+            alias=SERVICE_INI_SECTIONS["experimental"],
+            default_factory=Experimental,
+        ),
+    ]
+
+    model_config = ConfigDict(extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def warn_extra_sections(cls, data):
+        if isinstance(data, dict):
+            if extra_sections := _get_extra_fields(cls, data):
+                logger.warning(
+                    f"INI file contains sections that are not recognized or not used for the {cls.__name__} deployment profile:\n"
+                    + "\n".join(
+                        f" - {extra_section}"
+                        for extra_section in extra_sections
+                    )
+                    + "\nThese sections will be ignored."
+                )
+        return data
+
+
+class Node(BaseProfile):
     service_node_api: Annotated[
         NodeAPI,
-        Field(alias="service:node-api", default_factory=NodeAPI),
+        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
     ]
     service_graph: Annotated[
-        Graph, Field(alias="service:graph", default_factory=Graph)
+        Graph,
+        Field(alias=SERVICE_INI_SECTIONS["graph"], default_factory=Graph),
     ]
     compose: Annotated[
         NodeCompose, Field(alias="compose", default_factory=NodeCompose)
     ]
 
 
-class Portal(BaseModel):
+class Portal(BaseProfile):
     service_federation_api: Annotated[
         FedAPI,
-        Field(alias="service:federation-api", default_factory=FedAPI),
+        Field(
+            alias=SERVICE_INI_SECTIONS["federation-api"],
+            default_factory=FedAPI,
+        ),
     ]
     service_query: Annotated[
-        Query, Field(alias="service:query", default_factory=Query)
+        Query,
+        Field(alias=SERVICE_INI_SECTIONS["query"], default_factory=Query),
     ]
     compose: Annotated[
         PortalCompose,
@@ -185,20 +262,25 @@ class Portal(BaseModel):
     ]
 
 
-class Testing(BaseModel):
+class Testing(BaseProfile):
     service_node_api: Annotated[
         NodeAPI,
-        Field(alias="service:node-api", default_factory=NodeAPI),
+        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
     ]
     service_graph: Annotated[
-        Graph, Field(alias="service:graph", default_factory=Graph)
+        Graph,
+        Field(alias=SERVICE_INI_SECTIONS["graph"], default_factory=Graph),
     ]
     service_federation_api: Annotated[
         FedAPI,
-        Field(alias="service:federation-api", default_factory=FedAPI),
+        Field(
+            alias=SERVICE_INI_SECTIONS["federation-api"],
+            default_factory=FedAPI,
+        ),
     ]
     service_query: Annotated[
-        Query, Field(alias="service:query", default_factory=Query)
+        Query,
+        Field(alias=SERVICE_INI_SECTIONS["query"], default_factory=Query),
     ]
     compose: Annotated[
         TestingCompose,
