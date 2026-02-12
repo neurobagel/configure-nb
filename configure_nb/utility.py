@@ -8,7 +8,7 @@ from .models import ConfigFile
 def load_ini_as_dict(file_path: Path) -> dict:
     """Read an INI file and return its contents as a nested dictionary."""
     config = configparser.ConfigParser()
-    # Convert keys to uppercase to match the expected environment variable format
+    # By default, keys are converted to lowercase - convert instead to uppercase to match the expected environment variable format
     # We need to silence an erroneous mypy error here (see https://github.com/python/mypy/issues/5062)
     config.optionxform = lambda option: option.upper()  # type: ignore
 
