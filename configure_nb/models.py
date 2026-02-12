@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import PurePosixPath
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import (
@@ -78,12 +78,15 @@ class Graph(BaseConfig):
     graph_db: Annotated[
         str, Field(alias="NB_GRAPH_DB", default="repositories/my_db")
     ]
-    graph_data: Annotated[Path, Field(alias="NB_GRAPH_DATA", default="./data")]
+    graph_data: Annotated[
+        PurePosixPath, Field(alias="LOCAL_GRAPH_DATA", default="./data")
+    ]
     graph_port_host: Annotated[
         str, Field(alias="NB_GRAPH_PORT_HOST", default="7200")
     ]
     graph_secrets_path: Annotated[
-        Path, Field(alias="NB_GRAPH_SECRETS_PATH", default="./secrets")
+        PurePosixPath,
+        Field(alias="NB_GRAPH_SECRETS_PATH", default="./secrets"),
     ]
     graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 
