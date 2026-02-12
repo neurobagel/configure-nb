@@ -37,7 +37,6 @@ def main(
             resolve_path=True,
         ),
     ] = Path(".env"),
-    # TODO: Add overwrite option?
     verbosity: Annotated[
         VerbosityLevel,
         typer.Option(
@@ -47,13 +46,14 @@ def main(
             help="Set the logging verbosity level. 0 = show errors only; 1 = show errors, warnings, and informational messages; 2 = show all logs, including debug messages.",
         ),
     ] = VerbosityLevel.INFO,
+    # TODO: Add option to explicitly allow overwriting?
 ):
     """
     Generate a valid .env file for Neurobagel deployment configuration.
     """
     if config_file.exists():
         logger.info(f"Loading configuration from file: {config_file}")
-        ini_contents = util.load_ini(config_file)
+        ini_contents = util.load_ini_as_dict(config_file)
     else:
         logger.info(
             "No configuration file provided. Using default values for all settings."
@@ -90,7 +90,6 @@ def main(
             )
         log_error(logger, f"{err_message}\nValidation details:\n {err}")
 
-    # env_vars = util.flatten_config_to_dict(config)
     util.write_config_to_env_file(config, output_file)
     logger.info(
         f"Environment variable configuration successfully written to: {output_file}"

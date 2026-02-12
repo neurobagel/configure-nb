@@ -23,6 +23,7 @@ SERVICE_INI_SECTIONS = {
 
 
 def path_has_leading_slash(path: str) -> str:
+    """Raise an error if the provided path does not start with a leading slash."""
     # TODO: Should we prepend the leading slash automatically?
     if path and not path.startswith("/"):
         raise ValueError("Base path must start with a leading slash.")
@@ -30,6 +31,7 @@ def path_has_leading_slash(path: str) -> str:
 
 
 def domain_has_no_protocol(domain: str) -> str:
+    """Raise an error if the provided domain includes a protocol."""
     if domain.startswith(("http://", "https://")):
         raise ValueError(
             "Domain name must not include a protocol (http:// or https://)."
@@ -38,6 +40,7 @@ def domain_has_no_protocol(domain: str) -> str:
 
 
 def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
+    """Return fields that are present in the input data but are not defined in the Pydantic model."""
     recognized_fields = {
         field.alias or name for name, field in cls.model_fields.items()
     }
@@ -65,6 +68,8 @@ class BaseConfig(BaseModel):
 
 
 class Graph(BaseConfig):
+    """Model for the graph store configuration."""
+
     ini_section = SERVICE_INI_SECTIONS["graph"]
 
     graph_username: Annotated[
@@ -84,6 +89,8 @@ class Graph(BaseConfig):
 
 
 class NodeAPI(BaseConfig):
+    """Model for the node API configuration."""
+
     ini_section = SERVICE_INI_SECTIONS["node-api"]
 
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
@@ -108,6 +115,8 @@ class NodeAPI(BaseConfig):
 
 
 class FedAPI(BaseConfig):
+    """Model for the federation API configuration."""
+
     ini_section = SERVICE_INI_SECTIONS["federation-api"]
 
     fapi_base_path: Annotated[
@@ -130,6 +139,8 @@ class FedAPI(BaseConfig):
 
 
 class Query(BaseConfig):
+    """Model for the query tool configuration."""
+
     ini_section = SERVICE_INI_SECTIONS["query"]
 
     # TODO: Consider constructing this URL automatically for production portal deployments?
@@ -160,6 +171,8 @@ class Query(BaseConfig):
 
 
 class Experimental(BaseConfig):
+    """Model for experimental configuration variables that are associated with multiple services."""
+
     ini_section = SERVICE_INI_SECTIONS["experimental"]
 
     enable_auth: Annotated[bool, Field(alias="NB_ENABLE_AUTH", default=False)]
@@ -171,6 +184,8 @@ class Experimental(BaseConfig):
 
 
 class NodeCompose(BaseConfig):
+    """Model for the Docker Compose configuration variables for a node deployment."""
+
     ini_section = SERVICE_INI_SECTIONS["compose"]
 
     profile: Annotated[
@@ -183,6 +198,8 @@ class NodeCompose(BaseConfig):
 
 
 class PortalCompose(BaseConfig):
+    """Model for the Docker Compose configuration variables for a portal deployment."""
+
     ini_section = SERVICE_INI_SECTIONS["compose"]
 
     profile: Annotated[
@@ -195,6 +212,8 @@ class PortalCompose(BaseConfig):
 
 
 class TestingCompose(BaseConfig):
+    """Model for the Docker Compose configuration variables for a testing deployment."""
+
     ini_section = SERVICE_INI_SECTIONS["compose"]
 
     project_name: Annotated[
@@ -231,6 +250,8 @@ class BaseProfile(BaseModel):
 
 
 class Node(BaseProfile):
+    """Model for the production node deployment configuration."""
+
     service_node_api: Annotated[
         NodeAPI,
         Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
@@ -245,6 +266,8 @@ class Node(BaseProfile):
 
 
 class Portal(BaseProfile):
+    """Model for the production portal deployment configuration."""
+
     service_federation_api: Annotated[
         FedAPI,
         Field(
@@ -263,6 +286,8 @@ class Portal(BaseProfile):
 
 
 class Testing(BaseProfile):
+    """Model for a testing deployment configuration that includes all services."""
+
     service_node_api: Annotated[
         NodeAPI,
         Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
