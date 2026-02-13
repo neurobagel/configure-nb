@@ -67,6 +67,7 @@ def test_test_stack_dotenv_created_when_ini_missing(
 
     env = dotenv_values(tmp_dotenv_path)
 
+    assert "No configuration file provided" in caplog.text
     assert "Defaulting to a test deployment configuration" in caplog.text
     assert set(env.keys()) == set(expected_test_stack_env_vars)
     assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_test_stack"
@@ -444,3 +445,26 @@ COMPOSE_PROFILES=node
 
     for part in expected_warning:
         assert part in errors[0].message
+
+
+def test_created_dotenv_matches_expected_output(
+    runner, tmp_dotenv_path, caplog, example_data_path
+):
+    """Smoke test that the .env created from a sample INI file matches the expected output in format and values."""
+    ini_file = example_data_path / "1_valid_node_config.ini"
+    expected_env_file = example_data_path / "1_valid_node.env"
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            ini_file,
+            "--output",
+            tmp_dotenv_path,
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Loading configuration from file" in caplog.text
+    assert tmp_dotenv_path.exists()
+    assert tmp_dotenv_path.read_text() == expected_env_file.read_text()
