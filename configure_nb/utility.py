@@ -31,6 +31,8 @@ def write_config_to_env_file(config: ConfigFile, out_file: Path) -> None:
         )
         for section_num, section_vars in enumerate(
             # exclude_none useful for experimental variables that we want to omit from the .env file if unset
+            # NOTE: fields with a default value of "" are NOT excluded, since this is a valid value for some variables
+            # (and an empty string value is different from the variable being unset)
             config.model_dump(by_alias=True, exclude_none=True).values()
         ):
             if section_num > 0:
