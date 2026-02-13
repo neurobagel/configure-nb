@@ -12,6 +12,7 @@ from pydantic import (
 
 from .logger import logger
 
+# INI section names corresponding to each service
 SERVICE_INI_SECTIONS = {
     "node-api": "service:node-api",
     "graph": "service:graph",
@@ -48,6 +49,8 @@ def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
 
 
 class BaseConfig(BaseModel):
+    # Define a class variable for the INI section name so it can be used for logging
+    # without it ending up in the model fields
     ini_section: ClassVar[str]
 
     model_config = ConfigDict(extra="ignore")
