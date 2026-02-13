@@ -96,6 +96,7 @@ class NodeAPI(BaseConfig):
 
     ini_section = SERVICE_INI_SECTIONS["node-api"]
 
+    napi_tag: Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
     napi_base_path: Annotated[
         str,
@@ -113,7 +114,6 @@ class NodeAPI(BaseConfig):
     napi_min_cell_size: Annotated[
         int, Field(alias="NB_MIN_CELL_SIZE", default=0)
     ]
-    napi_tag: Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
@@ -122,6 +122,7 @@ class FedAPI(BaseConfig):
 
     ini_section = SERVICE_INI_SECTIONS["federation-api"]
 
+    fapi_tag: Annotated[str, Field(alias="NB_FAPI_TAG", default="latest")]
     fapi_base_path: Annotated[
         str,
         Field(alias="NB_FAPI_BASE_PATH", default=""),
@@ -138,7 +139,6 @@ class FedAPI(BaseConfig):
     federate_remote_public_nodes: Annotated[
         bool, Field(alias="NB_FEDERATE_REMOTE_PUBLIC_NODES", default=True)
     ]
-    fapi_tag: Annotated[str, Field(alias="NB_FAPI_TAG", default="latest")]
 
 
 class Query(BaseConfig):
@@ -146,6 +146,7 @@ class Query(BaseConfig):
 
     ini_section = SERVICE_INI_SECTIONS["query"]
 
+    query_tag: Annotated[str, Field(alias="NB_QUERY_TAG", default="latest")]
     # TODO: Consider constructing this URL automatically for production portal deployments?
     api_query_url: Annotated[
         str, Field(alias="NB_API_QUERY_URL", default="http://localhost:8080")
@@ -214,14 +215,14 @@ class PortalCompose(BaseConfig):
     ]
 
 
-class TestingCompose(BaseConfig):
-    """Model for the Docker Compose configuration variables for a testing deployment."""
+class TestStackCompose(BaseConfig):
+    """Model for the Docker Compose configuration variables for a test deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
 
     project_name: Annotated[
         str,
-        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_testing"),
+        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_test_stack"),
     ]
 
 
@@ -288,8 +289,11 @@ class Portal(BaseProfile):
     ]
 
 
-class Testing(BaseProfile):
-    """Model for a testing deployment configuration that includes all services."""
+class TestStack(BaseProfile):
+    """
+    Model for a test deployment configuration that includes all services.
+    TODO: Is 'sandbox deployment' a better name or misleading?
+    """
 
     service_node_api: Annotated[
         NodeAPI,
@@ -311,12 +315,12 @@ class Testing(BaseProfile):
         Field(alias=SERVICE_INI_SECTIONS["query"], default_factory=Query),
     ]
     compose: Annotated[
-        TestingCompose,
-        Field(alias="compose", default_factory=TestingCompose),
+        TestStackCompose,
+        Field(alias="compose", default_factory=TestStackCompose),
     ]
 
 
-class ConfigFile(RootModel[Node | Portal | Testing]):
+class ConfigFile(RootModel[Node | Portal | TestStack]):
     pass
 
 
