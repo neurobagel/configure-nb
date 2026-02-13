@@ -321,6 +321,8 @@ class TestStack(BaseProfile):
 
 
 class ConfigFile(RootModel[Node | Portal | TestStack]):
+    """Wrapper model representing a complete deployment configuration variant for Neurobagel."""
+
     pass
 
 
