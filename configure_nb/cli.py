@@ -74,7 +74,7 @@ def main(
             if not config_class:
                 log_error(
                     logger,
-                    f"Unrecognized COMPOSE_PROFILES value: {compose_profile}. "
+                    f"Invalid COMPOSE_PROFILES value: {compose_profile}. "
                     f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
                 )
             logger.info(f"Deployment configuration: {compose_profile}")
