@@ -43,8 +43,6 @@ def configure_logger(verbosity: VerbosityLevel = VerbosityLevel.INFO) -> None:
     logger.addHandler(handler)
 
     logger.setLevel(level)
-    # for handler in logger.handlers:
-    #     handler.setLevel(level)
 
     # propagate should be False to avoid duplicate messages from root logger
     # except when testing because otherwise Pytest does not capture the logs
