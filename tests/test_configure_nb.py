@@ -128,6 +128,37 @@ def test_test_stack_dotenv_created_when_ini_sections_empty(
     assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_test_stack"
 
 
+def test_invalid_profile_raises_error(
+    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+):
+    ini_content = """
+[service:node-api]
+NB_RETURN_AGG=false
+
+[compose]
+COMPOSE_PROFILES=not_a_profile
+"""
+
+    write_test_ini_file(ini_content, tmp_ini_path)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output",
+            tmp_dotenv_path,
+        ],
+    )
+
+    errors = list(caplog.records)
+
+    assert result.exit_code != 0
+    assert not tmp_dotenv_path.exists()
+    assert len(errors) == 1
+    assert "Invalid COMPOSE_PROFILES value: not_a_profile" in errors[0].message
+
+
 def test_all_node_vars_defined_when_node_profile_specified(
     runner, tmp_ini_path, tmp_dotenv_path, caplog
 ):
@@ -311,9 +342,7 @@ def test_unrecognized_ini_section_ignored_with_warning(
         ],
     )
 
-    warnings = [
-        record for record in caplog.records if record.levelname == "WARNING"
-    ]
+    warnings = list(caplog.records)
 
     assert result.exit_code == 0
     assert tmp_dotenv_path.exists()
@@ -390,9 +419,7 @@ def test_unrecognized_variables_ignored_with_warning(
         ],
     )
 
-    warnings = [
-        record for record in caplog.records if record.levelname == "WARNING"
-    ]
+    warnings = list(caplog.records)
 
     assert result.exit_code == 0
     assert tmp_dotenv_path.exists()
@@ -436,11 +463,10 @@ COMPOSE_PROFILES=node
         ],
     )
 
-    errors = [
-        record for record in caplog.records if record.levelname == "ERROR"
-    ]
+    errors = list(caplog.records)
 
     assert result.exit_code != 0
+    assert not tmp_dotenv_path.exists()
     assert len(errors) == 1
 
     for part in expected_warning:
