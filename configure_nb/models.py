@@ -30,11 +30,11 @@ def path_has_leading_slash(path: str) -> str:
     return path
 
 
-def domain_has_no_protocol(domain: str) -> str:
-    """Raise an error if the provided domain includes a protocol."""
+def domain_has_no_url_scheme(domain: str) -> str:
+    """Raise an error if the provided domain includes a URL scheme."""
     if domain.startswith(("http://", "https://")):
         raise ValueError(
-            "Domain name must not include a protocol (http:// or https://)."
+            "Domain name must not include a URL scheme (http:// or https://)."
         )
     return domain
 
@@ -58,7 +58,7 @@ class BaseConfig(BaseModel):
         if isinstance(data, dict):
             if extra_fields := _get_extra_fields(cls, data):
                 logger.warning(
-                    f"Section \\[{cls.ini_section}] contains variables that are not recognized or will not be used by the service:\n"
+                    f"Section \\[{cls.ini_section}] contains variables that are not recognized or used by the service:\n"
                     + "\n".join(
                         f" - {extra_field}" for extra_field in extra_fields
                     )
@@ -106,7 +106,7 @@ class NodeAPI(BaseConfig):
     napi_domain: Annotated[
         str,
         Field(alias="NB_NAPI_DOMAIN", default=""),
-        AfterValidator(domain_has_no_protocol),
+        AfterValidator(domain_has_no_url_scheme),
     ]
     napi_port_host: Annotated[
         str, Field(alias="NB_NAPI_PORT_HOST", default="8000")
@@ -131,7 +131,7 @@ class FedAPI(BaseConfig):
     fapi_domain: Annotated[
         str,
         Field(alias="NB_FAPI_DOMAIN", default=""),
-        AfterValidator(domain_has_no_protocol),
+        AfterValidator(domain_has_no_url_scheme),
     ]
     fapi_port_host: Annotated[
         str, Field(alias="NB_FAPI_PORT_HOST", default="8080")
@@ -159,7 +159,7 @@ class Query(BaseConfig):
     query_domain: Annotated[
         str,
         Field(alias="NB_QUERY_DOMAIN", default=""),
-        AfterValidator(domain_has_no_protocol),
+        AfterValidator(domain_has_no_url_scheme),
     ]
     query_port_host: Annotated[
         str, Field(alias="NB_QUERY_PORT_HOST", default="3000")
@@ -243,7 +243,7 @@ class BaseProfile(BaseModel):
         if isinstance(data, dict):
             if extra_sections := _get_extra_fields(cls, data):
                 logger.warning(
-                    f"INI file contains sections that are not recognized or not used for the {cls.__name__} deployment profile:\n"
+                    f"INI file contains sections that are not recognized or used for the {cls.__name__} deployment profile:\n"
                     + "\n".join(
                         f" - {extra_section}"
                         for extra_section in extra_sections
