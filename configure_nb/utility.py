@@ -7,6 +7,7 @@ from .models import ConfigFile
 
 def load_ini_as_dict(file_path: Path) -> dict:
     """Read an INI file and return its contents as a nested dictionary."""
+    # NOTE: By default, when there are duplicate sections or keys, the last occurrence will be kept
     config = configparser.ConfigParser()
     # By default, keys are converted to lowercase - convert instead to uppercase to match the expected environment variable format
     # We need to silence an erroneous mypy error here (see https://github.com/python/mypy/issues/5062)
