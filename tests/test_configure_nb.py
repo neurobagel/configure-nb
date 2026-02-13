@@ -2,31 +2,15 @@ from pathlib import Path
 
 import pytest
 from dotenv import dotenv_values
-from typer.testing import CliRunner
 
 from configure_nb.cli import configure_nb
 
-
-@pytest.fixture(scope="session")
-def runner():
-    return CliRunner()
+from .helpers import write_test_ini_file
 
 
 @pytest.fixture()
 def example_data_path():
     return Path(__file__).parent / "data"
-
-
-@pytest.fixture()
-def tmp_ini_path(tmp_path):
-    """Temporary INI file path for testing."""
-    return tmp_path / "test_config.ini"
-
-
-@pytest.fixture()
-def tmp_dotenv_path(tmp_path):
-    """Temporary .env file path for testing output."""
-    return tmp_path / ".env"
 
 
 @pytest.fixture()
@@ -68,12 +52,6 @@ def expected_test_stack_env_vars():
         # Experimental
         "NB_ENABLE_AUTH",
     ]
-
-
-def write_test_ini_file(content: str, ini_path: Path) -> None:
-    """Helper function to write test INI content to a file."""
-    with open(ini_path, "w") as f:
-        f.write(content.strip())
 
 
 def test_test_stack_dotenv_created_when_ini_missing(
@@ -272,3 +250,197 @@ COMPOSE_PROFILES=portal
 
     assert env == expected_env
     assert "configuration: portal" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "ini_content, expected_warning",
+    [
+        (
+            """
+            [service:node-api]
+            NB_NAPI_DOMAIN=node.testdomain.org
+
+            [wrong-section-name]
+            LOCAL_GRAPH_DATA=/data/test_data
+
+            [compose]
+            COMPOSE_PROFILES=node
+            """,
+            [
+                "sections that are not recognized or used for the Node deployment profile",
+                "wrong-section-name",
+            ],
+        ),
+        (
+            """
+            [service:node-api]
+            NB_NAPI_DOMAIN=node.testdomain.org
+
+            [service:federation-api]
+            NB_FAPI_DOMAIN=federate.testdomain.org
+
+            [compose]
+            COMPOSE_PROFILES=node
+            """,
+            [
+                "sections that are not recognized or used for the Node deployment profile",
+                "service:federation-api",
+            ],
+        ),
+    ],
+)
+def test_unrecognized_ini_section_ignored_with_warning(
+    runner,
+    tmp_ini_path,
+    tmp_dotenv_path,
+    caplog,
+    propagate_warnings,
+    ini_content,
+    expected_warning,
+):
+    write_test_ini_file(ini_content, tmp_ini_path)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output",
+            tmp_dotenv_path,
+        ],
+    )
+
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
+
+    assert result.exit_code == 0
+    assert tmp_dotenv_path.exists()
+    assert len(warnings) == 1
+    for part in expected_warning:
+        assert part in warnings[0].message
+
+
+@pytest.mark.parametrize(
+    "ini_content, num_expected_warnings, expected_warnings",
+    [
+        (
+            """
+            [service:node-api]
+            NB_NAPI_DOMAIN=node.testdomain.org
+            EXTRA1=value1
+
+            [service:graph]
+            EXTRA2=value2
+
+            [compose]
+            COMPOSE_PROFILES=node
+            """,
+            2,
+            [
+                [
+                    "[service:node-api] contains variables that are not recognized",
+                    "EXTRA1",
+                ],
+                [
+                    "[service:graph] contains variables that are not recognized",
+                    "EXTRA2",
+                ],
+            ],
+        ),
+        (
+            """
+            [service:node-api]
+            NB_NAPI_DOMAIN=node.testdomain.org
+            LOCAL_GRAPH_DATA=/data/test_data
+
+            [compose]
+            COMPOSE_PROFILES=node
+            """,
+            1,
+            [
+                [
+                    "[service:node-api] contains variables that are not recognized",
+                    "LOCAL_GRAPH_DATA",
+                ],
+            ],
+        ),
+    ],
+)
+def test_unrecognized_variables_ignored_with_warning(
+    runner,
+    tmp_ini_path,
+    tmp_dotenv_path,
+    caplog,
+    propagate_warnings,
+    ini_content,
+    num_expected_warnings,
+    expected_warnings,
+):
+    write_test_ini_file(ini_content, tmp_ini_path)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output",
+            tmp_dotenv_path,
+        ],
+    )
+
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
+
+    assert result.exit_code == 0
+    assert tmp_dotenv_path.exists()
+    assert len(warnings) == num_expected_warnings
+
+    for expected_warning in expected_warnings:
+        assert any(
+            all(part in warning.message for part in expected_warning)
+            for warning in warnings
+        ), f"Expected warning not fully found: {expected_warning}"
+
+
+def test_invalid_variable_value_raises_error(
+    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+):
+    ini_content = """
+[service:node-api]
+NB_NAPI_DOMAIN=https://testdomain.org
+NB_NAPI_BASE_PATH=node
+
+[compose]
+COMPOSE_PROFILES=node
+"""
+    expected_warning = [
+        "problems with configuration values",
+        "NB_NAPI_BASE_PATH",
+        "must start with a leading slash",
+        "NB_NAPI_DOMAIN",
+        "must not include a URL scheme",
+    ]
+
+    write_test_ini_file(ini_content, tmp_ini_path)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output",
+            tmp_dotenv_path,
+        ],
+    )
+
+    errors = [
+        record for record in caplog.records if record.levelname == "ERROR"
+    ]
+
+    assert result.exit_code != 0
+    assert len(errors) == 1
+
+    for part in expected_warning:
+        assert part in errors[0].message

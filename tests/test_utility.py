@@ -1,7 +1,9 @@
 from configure_nb import utility as util
 
+from .helpers import write_test_ini_file
 
-def test_load_ini_as_dict(tmp_path):
+
+def test_load_ini_as_dict(tmp_ini_path):
     # Create a temporary INI file for testing
     ini_content = """
 [service:first-service]
@@ -17,10 +19,8 @@ KEYB=true
         "other-section": {"KEYA": "/path/to/something", "KEYB": "true"},
     }
 
-    ini_path = tmp_path / "test_config.ini"
-    with open(ini_path, "w") as f:
-        f.write(ini_content.strip())
+    write_test_ini_file(ini_content, tmp_ini_path)
 
-    loaded_ini = util.load_ini_as_dict(ini_path)
+    loaded_ini = util.load_ini_as_dict(tmp_ini_path)
 
     assert loaded_ini == expected_loaded_ini
