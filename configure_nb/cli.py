@@ -90,7 +90,9 @@ def main(
             )
         log_error(logger, f"{err_message}\nValidation details:\n {err}")
 
-    util.write_config_to_env_file(config, output_file)
+    with open(output_file, "w", encoding="utf-8") as env_file:
+        env_file.write(util.config_to_env_str(config))
+
     logger.info(
         f"Environment variable configuration successfully written to: {output_file}"
     )
