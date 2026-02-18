@@ -39,6 +39,9 @@ repos:
         args: 
           - --toml=pyproject.toml
 
+  # pre-commit runs in an isolated environment by default, so typed dependencies must be added explicitly
+  # to ensure that dynamic type checking behaves the same as mypy installed locally
+  # see https://github.com/pre-commit/pre-commit/issues/1580#issuecomment-679413936
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
     hooks:
