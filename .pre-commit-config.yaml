@@ -43,5 +43,8 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
+        additional_dependencies:
+          - pydantic
+          - typer
         args:
           - --config-file=pyproject.toml
