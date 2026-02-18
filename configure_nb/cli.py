@@ -25,17 +25,17 @@ def main(
             resolve_path=True,
         ),
     ] = Path("nb_config.ini"),
-    output_file: Annotated[
+    output_dir: Annotated[
         Path,
         typer.Option(
-            "--output",
+            "--output-dir",
             "-o",
-            help="Path to the output env file.",
-            file_okay=True,
-            dir_okay=False,
+            help="Path to the directory where the generated .env file should be saved.",
+            file_okay=False,
+            dir_okay=True,
             resolve_path=True,
         ),
-    ] = Path(".env"),
+    ] = Path("."),
     verbosity: Annotated[
         VerbosityLevel,
         typer.Option(
@@ -88,9 +88,10 @@ def main(
             )
         log_error(logger, f"{err_message}\nValidation details:\n {err}")
 
-    with open(output_file, "w", encoding="utf-8") as env_file:
+    out_dotenv_path = output_dir / ".env"
+    with open(out_dotenv_path, "w", encoding="utf-8") as env_file:
         env_file.write(util.config_to_env_str(config))
 
     logger.info(
-        f"Environment variable configuration successfully written to: {output_file}"
+        f"Environment variable configuration successfully written to: {out_dotenv_path}"
     )

@@ -55,13 +55,13 @@ def expected_quickstart_env_vars():
 
 
 def test_quickstart_dotenv_created_when_ini_missing(
-    runner, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner, tmp_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
 ):
     runner.invoke(
         configure_nb,
         [
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -74,7 +74,12 @@ def test_quickstart_dotenv_created_when_ini_missing(
 
 
 def test_quickstart_dotenv_created_when_profile_not_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    expected_quickstart_env_vars,
+    caplog,
 ):
     ini_content = """
 [service:graph]
@@ -87,8 +92,8 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -100,7 +105,12 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
 
 
 def test_quickstart_dotenv_created_when_ini_sections_empty(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    expected_quickstart_env_vars,
+    caplog,
 ):
     """
     Test that when an INI file contains valid sections but has no variables defined (i.e., sections are empty),
@@ -120,8 +130,8 @@ def test_quickstart_dotenv_created_when_ini_sections_empty(
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -133,7 +143,7 @@ def test_quickstart_dotenv_created_when_ini_sections_empty(
 
 
 def test_invalid_profile_raises_error(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog, propagate_errors
 ):
     ini_content = """
 [service:node-api]
@@ -150,8 +160,8 @@ COMPOSE_PROFILES=not_a_profile
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -164,7 +174,7 @@ COMPOSE_PROFILES=not_a_profile
 
 
 def test_all_node_vars_defined_when_node_profile_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog
 ):
     ini_content = """
 [service:node-api]
@@ -216,8 +226,8 @@ COMPOSE_PROFILES=node
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -229,7 +239,7 @@ COMPOSE_PROFILES=node
 
 
 def test_all_portal_vars_defined_when_portal_profile_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog
 ):
     ini_content = """
 [service:federation-api]
@@ -277,8 +287,8 @@ COMPOSE_PROFILES=portal
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -328,6 +338,7 @@ COMPOSE_PROFILES=portal
 def test_unrecognized_ini_section_ignored_with_warning(
     runner,
     tmp_ini_path,
+    tmp_path,
     tmp_dotenv_path,
     caplog,
     propagate_warnings,
@@ -341,8 +352,8 @@ def test_unrecognized_ini_section_ignored_with_warning(
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -402,6 +413,7 @@ def test_unrecognized_ini_section_ignored_with_warning(
 def test_unrecognized_variables_ignored_with_warning(
     runner,
     tmp_ini_path,
+    tmp_path,
     tmp_dotenv_path,
     caplog,
     propagate_warnings,
@@ -415,8 +427,8 @@ def test_unrecognized_variables_ignored_with_warning(
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -434,7 +446,7 @@ def test_unrecognized_variables_ignored_with_warning(
 
 
 def test_invalid_variable_value_raises_error(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog, propagate_errors
 ):
     ini_content = """
 [service:node-api]
@@ -459,8 +471,8 @@ COMPOSE_PROFILES=node
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -475,7 +487,7 @@ COMPOSE_PROFILES=node
 
 
 def test_created_dotenv_matches_expected_output(
-    runner, tmp_dotenv_path, caplog, example_data_path
+    runner, tmp_path, tmp_dotenv_path, caplog, example_data_path
 ):
     """Smoke test that the .env created from a sample INI file matches the expected output in format and values."""
     ini_file = example_data_path / "1_valid_node_config.ini"
@@ -486,8 +498,8 @@ def test_created_dotenv_matches_expected_output(
         [
             "--config-file",
             ini_file,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
