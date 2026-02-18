@@ -48,7 +48,12 @@ def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
     return set(data) - recognized_fields
 
 
-class BaseConfig(BaseModel):
+class ServiceBaseConfig(BaseModel):
+    """
+    Base model for the configuration of a specific Neurobagel service,
+    with custom warning logic about variables that are not recognized by the INI section corresponding to the service.
+    """
+
     # Define a class variable for the INI section name so it can be used for logging
     # without it ending up in the model fields
     ini_section: ClassVar[str]
@@ -70,7 +75,7 @@ class BaseConfig(BaseModel):
         return data
 
 
-class Graph(BaseConfig):
+class Graph(ServiceBaseConfig):
     """Model for the graph store configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["graph"]
@@ -94,7 +99,7 @@ class Graph(BaseConfig):
     graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 
 
-class NodeAPI(BaseConfig):
+class NodeAPI(ServiceBaseConfig):
     """Model for the node API configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["node-api"]
@@ -120,7 +125,7 @@ class NodeAPI(BaseConfig):
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
-class FederationAPI(BaseConfig):
+class FederationAPI(ServiceBaseConfig):
     """Model for the federation API configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["federation-api"]
@@ -144,7 +149,7 @@ class FederationAPI(BaseConfig):
     ]
 
 
-class Query(BaseConfig):
+class Query(ServiceBaseConfig):
     """Model for the query tool configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["query"]
@@ -177,7 +182,7 @@ class Query(BaseConfig):
     ]
 
 
-class Experimental(BaseConfig):
+class Experimental(ServiceBaseConfig):
     """Model for experimental configuration variables that are associated with multiple services."""
 
     ini_section = SERVICE_INI_SECTIONS["experimental"]
@@ -190,7 +195,7 @@ class Experimental(BaseConfig):
     ]
 
 
-class NodeCompose(BaseConfig):
+class NodeCompose(ServiceBaseConfig):
     """Model for the Docker Compose configuration variables for a node deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -204,7 +209,7 @@ class NodeCompose(BaseConfig):
     ]
 
 
-class PortalCompose(BaseConfig):
+class PortalCompose(ServiceBaseConfig):
     """Model for the Docker Compose configuration variables for a portal deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -218,7 +223,7 @@ class PortalCompose(BaseConfig):
     ]
 
 
-class QuickstartCompose(BaseConfig):
+class QuickstartCompose(ServiceBaseConfig):
     """Model for the Docker Compose configuration variables for a test deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -229,7 +234,12 @@ class QuickstartCompose(BaseConfig):
     ]
 
 
-class BaseProfile(BaseModel):
+class ProfileBaseConfig(BaseModel):
+    """
+    Base model for the configuration of a specific Neurobagel deployment profile/variant (node, portal, or quickstart),
+    with custom warning logic about INI sections that are not recognized or relevant to the profile.
+    """
+
     service_experimental: Annotated[
         Experimental,
         Field(
@@ -256,23 +266,23 @@ class BaseProfile(BaseModel):
         return data
 
 
-class Node(BaseProfile):
+class Node(ProfileBaseConfig):
     """Model for the production node deployment configuration."""
 
-    service_node_api: Annotated[
-        NodeAPI,
-        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
-    ]
     service_graph: Annotated[
         Graph,
         Field(alias=SERVICE_INI_SECTIONS["graph"], default_factory=Graph),
+    ]
+    service_node_api: Annotated[
+        NodeAPI,
+        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
     ]
     compose: Annotated[
         NodeCompose, Field(alias="compose", default_factory=NodeCompose)
     ]
 
 
-class Portal(BaseProfile):
+class Portal(ProfileBaseConfig):
     """Model for the production portal deployment configuration."""
 
     service_federation_api: Annotated[
@@ -292,16 +302,16 @@ class Portal(BaseProfile):
     ]
 
 
-class Quickstart(BaseProfile):
+class Quickstart(ProfileBaseConfig):
     """Model for a test deployment configuration that includes all services."""
 
-    service_node_api: Annotated[
-        NodeAPI,
-        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
-    ]
     service_graph: Annotated[
         Graph,
         Field(alias=SERVICE_INI_SECTIONS["graph"], default_factory=Graph),
+    ]
+    service_node_api: Annotated[
+        NodeAPI,
+        Field(alias=SERVICE_INI_SECTIONS["node-api"], default_factory=NodeAPI),
     ]
     service_federation_api: Annotated[
         FederationAPI,
