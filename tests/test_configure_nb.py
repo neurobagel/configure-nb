@@ -102,6 +102,10 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
 def test_test_stack_dotenv_created_when_ini_sections_empty(
     runner, tmp_ini_path, tmp_dotenv_path, expected_test_stack_env_vars, caplog
 ):
+    """
+    Test that when an INI file contains valid sections but has no variables defined (i.e., sections are empty),
+    a .env with all expected variables for a test deployment is created.
+    """
     ini_content = """
 [service:node-api]
 
@@ -352,7 +356,7 @@ def test_unrecognized_ini_section_ignored_with_warning(
 
 
 @pytest.mark.parametrize(
-    "ini_content, num_expected_warnings, expected_warnings",
+    "ini_content, expected_warnings",
     [
         (
             """
@@ -366,7 +370,6 @@ def test_unrecognized_ini_section_ignored_with_warning(
             [compose]
             COMPOSE_PROFILES=node
             """,
-            2,
             [
                 [
                     "[service:node-api] contains variables that are not recognized",
@@ -387,7 +390,6 @@ def test_unrecognized_ini_section_ignored_with_warning(
             [compose]
             COMPOSE_PROFILES=node
             """,
-            1,
             [
                 [
                     "[service:node-api] contains variables that are not recognized",
@@ -404,7 +406,6 @@ def test_unrecognized_variables_ignored_with_warning(
     caplog,
     propagate_warnings,
     ini_content,
-    num_expected_warnings,
     expected_warnings,
 ):
     write_test_ini_file(ini_content, tmp_ini_path)
@@ -423,7 +424,7 @@ def test_unrecognized_variables_ignored_with_warning(
 
     assert result.exit_code == 0
     assert tmp_dotenv_path.exists()
-    assert len(warnings) == num_expected_warnings
+    assert len(warnings) == len(expected_warnings)
 
     for expected_warning in expected_warnings:
         assert any(
