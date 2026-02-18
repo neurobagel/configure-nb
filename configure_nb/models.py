@@ -6,7 +6,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    RootModel,
     model_validator,
 )
 
@@ -48,7 +47,7 @@ def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
     return set(data) - recognized_fields
 
 
-class ServiceBaseConfig(BaseModel):
+class BaseService(BaseModel):
     """
     Base model for the configuration of a specific Neurobagel service,
     with custom warning logic about variables that are not recognized by the INI section corresponding to the service.
@@ -75,7 +74,7 @@ class ServiceBaseConfig(BaseModel):
         return data
 
 
-class Graph(ServiceBaseConfig):
+class Graph(BaseService):
     """Model for the graph store configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["graph"]
@@ -99,7 +98,7 @@ class Graph(ServiceBaseConfig):
     graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 
 
-class NodeAPI(ServiceBaseConfig):
+class NodeAPI(BaseService):
     """Model for the node API configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["node-api"]
@@ -125,7 +124,7 @@ class NodeAPI(ServiceBaseConfig):
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
-class FederationAPI(ServiceBaseConfig):
+class FederationAPI(BaseService):
     """Model for the federation API configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["federation-api"]
@@ -149,7 +148,7 @@ class FederationAPI(ServiceBaseConfig):
     ]
 
 
-class Query(ServiceBaseConfig):
+class Query(BaseService):
     """Model for the query tool configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["query"]
@@ -182,7 +181,7 @@ class Query(ServiceBaseConfig):
     ]
 
 
-class Experimental(ServiceBaseConfig):
+class Experimental(BaseService):
     """Model for experimental configuration variables that are associated with multiple services."""
 
     ini_section = SERVICE_INI_SECTIONS["experimental"]
@@ -195,7 +194,7 @@ class Experimental(ServiceBaseConfig):
     ]
 
 
-class NodeCompose(ServiceBaseConfig):
+class NodeCompose(BaseService):
     """Model for the Docker Compose configuration variables for a node deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -209,7 +208,7 @@ class NodeCompose(ServiceBaseConfig):
     ]
 
 
-class PortalCompose(ServiceBaseConfig):
+class PortalCompose(BaseService):
     """Model for the Docker Compose configuration variables for a portal deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -223,7 +222,7 @@ class PortalCompose(ServiceBaseConfig):
     ]
 
 
-class QuickstartCompose(ServiceBaseConfig):
+class QuickstartCompose(BaseService):
     """Model for the Docker Compose configuration variables for a test deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
@@ -234,7 +233,7 @@ class QuickstartCompose(ServiceBaseConfig):
     ]
 
 
-class ProfileBaseConfig(BaseModel):
+class BaseProfile(BaseModel):
     """
     Base model for the configuration of a specific Neurobagel deployment profile/variant (node, portal, or quickstart),
     with custom warning logic about INI sections that are not recognized or relevant to the profile.
@@ -266,7 +265,7 @@ class ProfileBaseConfig(BaseModel):
         return data
 
 
-class Node(ProfileBaseConfig):
+class Node(BaseProfile):
     """Model for the production node deployment configuration."""
 
     service_graph: Annotated[
@@ -282,7 +281,7 @@ class Node(ProfileBaseConfig):
     ]
 
 
-class Portal(ProfileBaseConfig):
+class Portal(BaseProfile):
     """Model for the production portal deployment configuration."""
 
     service_federation_api: Annotated[
@@ -302,7 +301,7 @@ class Portal(ProfileBaseConfig):
     ]
 
 
-class Quickstart(ProfileBaseConfig):
+class Quickstart(BaseProfile):
     """Model for a test deployment configuration that includes all services."""
 
     service_graph: Annotated[
@@ -330,13 +329,7 @@ class Quickstart(ProfileBaseConfig):
     ]
 
 
-class ConfigFile(RootModel[Node | Portal | Quickstart]):
-    """Wrapper model representing a complete deployment configuration variant for Neurobagel."""
-
-    pass
-
-
-COMPOSE_PROFILE_TO_CLASS_MAP = {
+COMPOSE_PROFILE_TO_CLASS_MAP: dict[str, type[BaseProfile]] = {
     "node": Node,
     "portal": Portal,
 }

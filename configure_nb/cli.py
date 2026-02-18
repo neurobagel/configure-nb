@@ -1,13 +1,12 @@
 from pathlib import Path
-from typing import Annotated, Type
+from typing import Annotated
 
 import pydantic
 import typer
-from pydantic import BaseModel
 
 from . import utility as util
 from .logger import VerbosityLevel, configure_logger, log_error, logger
-from .models import COMPOSE_PROFILE_TO_CLASS_MAP, Quickstart
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, BaseProfile, Quickstart
 
 configure_nb = typer.Typer()
 
@@ -61,24 +60,23 @@ def main(
         ini_contents = {}
 
     compose_profile = ini_contents.get("compose", {}).get("COMPOSE_PROFILES")
+    if not compose_profile:
+        logger.info(
+            "The COMPOSE_PROFILES variable was not set. Defaulting to a test deployment configuration."
+        )
+        config_class: type[BaseProfile] = Quickstart
+    elif compose_profile not in COMPOSE_PROFILE_TO_CLASS_MAP:
+        log_error(
+            logger,
+            f"Invalid COMPOSE_PROFILES value: {compose_profile}. "
+            f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
+        )
+    else:
+        config_class = COMPOSE_PROFILE_TO_CLASS_MAP[compose_profile]
+        logger.info(f"Deployment configuration: {compose_profile}")
+
     try:
-        if not compose_profile:
-            logger.info(
-                "The COMPOSE_PROFILES variable was not set. Defaulting to a test deployment configuration."
-            )
-            config = Quickstart.model_validate(ini_contents)
-        else:
-            config_class: Type[BaseModel] | None = (
-                COMPOSE_PROFILE_TO_CLASS_MAP.get(compose_profile)
-            )
-            if not config_class:
-                log_error(
-                    logger,
-                    f"Invalid COMPOSE_PROFILES value: {compose_profile}. "
-                    f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
-                )
-            logger.info(f"Deployment configuration: {compose_profile}")
-            config = config_class.model_validate(ini_contents)
+        config = config_class.model_validate(ini_contents)
     except pydantic.ValidationError as err:
         if config_file.exists():
             # TODO: Can customize validation error from Pydantic to be more user friendly
