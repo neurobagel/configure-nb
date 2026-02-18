@@ -35,6 +35,7 @@ dependencies = [
 test = [
   "pytest",
   "pytest-cov",
+  "python-dotenv"
 ]
 dev = ["configure-nb[test]", "pre-commit"]
 
