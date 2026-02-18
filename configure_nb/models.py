@@ -120,7 +120,7 @@ class NodeAPI(BaseConfig):
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
 
 
-class FedAPI(BaseConfig):
+class FederationAPI(BaseConfig):
     """Model for the federation API configuration."""
 
     ini_section = SERVICE_INI_SECTIONS["federation-api"]
@@ -276,10 +276,10 @@ class Portal(BaseProfile):
     """Model for the production portal deployment configuration."""
 
     service_federation_api: Annotated[
-        FedAPI,
+        FederationAPI,
         Field(
             alias=SERVICE_INI_SECTIONS["federation-api"],
-            default_factory=FedAPI,
+            default_factory=FederationAPI,
         ),
     ]
     service_query: Annotated[
@@ -304,10 +304,10 @@ class Quickstart(BaseProfile):
         Field(alias=SERVICE_INI_SECTIONS["graph"], default_factory=Graph),
     ]
     service_federation_api: Annotated[
-        FedAPI,
+        FederationAPI,
         Field(
             alias=SERVICE_INI_SECTIONS["federation-api"],
-            default_factory=FedAPI,
+            default_factory=FederationAPI,
         ),
     ]
     service_query: Annotated[
