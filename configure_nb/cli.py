@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from . import utility as util
 from .logger import VerbosityLevel, configure_logger, log_error, logger
-from .models import COMPOSE_PROFILE_TO_CLASS_MAP, TestStack
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, Quickstart
 
 configure_nb = typer.Typer()
 
@@ -66,7 +66,7 @@ def main(
             logger.info(
                 "The COMPOSE_PROFILES variable was not set. Defaulting to a test deployment configuration."
             )
-            config = TestStack.model_validate(ini_contents)
+            config = Quickstart.model_validate(ini_contents)
         else:
             config_class: Type[BaseModel] | None = (
                 COMPOSE_PROFILE_TO_CLASS_MAP.get(compose_profile)

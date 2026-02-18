@@ -14,10 +14,10 @@ def example_data_path():
 
 
 @pytest.fixture()
-def expected_test_stack_env_vars():
+def expected_quickstart_env_vars():
     """
     Return all environment variables expected to be defined in the .env file
-    for a test stack deployment configuration.
+    for a test deployment configuration.
     """
     return [
         # Compose
@@ -54,8 +54,8 @@ def expected_test_stack_env_vars():
     ]
 
 
-def test_test_stack_dotenv_created_when_ini_missing(
-    runner, tmp_dotenv_path, expected_test_stack_env_vars, caplog
+def test_quickstart_dotenv_created_when_ini_missing(
+    runner, tmp_dotenv_path, expected_quickstart_env_vars, caplog
 ):
     runner.invoke(
         configure_nb,
@@ -69,12 +69,12 @@ def test_test_stack_dotenv_created_when_ini_missing(
 
     assert "No configuration file provided" in caplog.text
     assert "Defaulting to a test deployment configuration" in caplog.text
-    assert set(env.keys()) == set(expected_test_stack_env_vars)
-    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_test_stack"
+    assert set(env.keys()) == set(expected_quickstart_env_vars)
+    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_quickstart"
 
 
-def test_test_stack_dotenv_created_when_profile_not_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_test_stack_env_vars, caplog
+def test_quickstart_dotenv_created_when_profile_not_specified(
+    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
 ):
     ini_content = """
 [service:graph]
@@ -95,12 +95,12 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
     env = dotenv_values(tmp_dotenv_path)
 
     assert "Defaulting to a test deployment configuration" in caplog.text
-    assert set(env.keys()) == set(expected_test_stack_env_vars)
-    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_test_stack"
+    assert set(env.keys()) == set(expected_quickstart_env_vars)
+    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_quickstart"
 
 
-def test_test_stack_dotenv_created_when_ini_sections_empty(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_test_stack_env_vars, caplog
+def test_quickstart_dotenv_created_when_ini_sections_empty(
+    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
 ):
     """
     Test that when an INI file contains valid sections but has no variables defined (i.e., sections are empty),
@@ -128,8 +128,8 @@ def test_test_stack_dotenv_created_when_ini_sections_empty(
     env = dotenv_values(tmp_dotenv_path)
 
     assert "Defaulting to a test deployment configuration" in caplog.text
-    assert set(env.keys()) == set(expected_test_stack_env_vars)
-    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_test_stack"
+    assert set(env.keys()) == set(expected_quickstart_env_vars)
+    assert env["COMPOSE_PROJECT_NAME"] == "neurobagel_quickstart"
 
 
 def test_invalid_profile_raises_error(

@@ -218,14 +218,14 @@ class PortalCompose(BaseConfig):
     ]
 
 
-class TestStackCompose(BaseConfig):
+class QuickstartCompose(BaseConfig):
     """Model for the Docker Compose configuration variables for a test deployment."""
 
     ini_section = SERVICE_INI_SECTIONS["compose"]
 
     project_name: Annotated[
         str,
-        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_test_stack"),
+        Field(alias="COMPOSE_PROJECT_NAME", default="neurobagel_quickstart"),
     ]
 
 
@@ -292,11 +292,8 @@ class Portal(BaseProfile):
     ]
 
 
-class TestStack(BaseProfile):
-    """
-    Model for a test deployment configuration that includes all services.
-    TODO: Is 'sandbox deployment' a better name or misleading?
-    """
+class Quickstart(BaseProfile):
+    """Model for a test deployment configuration that includes all services."""
 
     service_node_api: Annotated[
         NodeAPI,
@@ -318,12 +315,12 @@ class TestStack(BaseProfile):
         Field(alias=SERVICE_INI_SECTIONS["query"], default_factory=Query),
     ]
     compose: Annotated[
-        TestStackCompose,
-        Field(alias="compose", default_factory=TestStackCompose),
+        QuickstartCompose,
+        Field(alias="compose", default_factory=QuickstartCompose),
     ]
 
 
-class ConfigFile(RootModel[Node | Portal | TestStack]):
+class ConfigFile(RootModel[Node | Portal | Quickstart]):
     """Wrapper model representing a complete deployment configuration variant for Neurobagel."""
 
     pass
