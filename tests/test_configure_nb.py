@@ -251,6 +251,10 @@ NB_QUERY_DOMAIN=myinstitute.org
 
 [compose]
 COMPOSE_PROFILES=portal
+
+[node:1]
+NAME=Local node
+API_URL=https://myinstitute.org/node
 """
 
     expected_env = {
