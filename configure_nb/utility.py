@@ -56,3 +56,10 @@ def write_text_file(path: Path, contents: str):
     """Write a string to a text file."""
     with open(path, "w", encoding="utf-8") as f:
         f.write(contents)
+
+
+def read_json(path: Path) -> dict:
+    """Read a JSON file and return its contents as a dictionary."""
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data
