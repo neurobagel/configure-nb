@@ -18,6 +18,12 @@ def tmp_dotenv_path(tmp_path):
 
 
 @pytest.fixture()
+def tmp_federation_nodes_config_path(tmp_path):
+    """Temporary local_nb_nodes.json path for testing output."""
+    return tmp_path / "local_nb_nodes.json"
+
+
+@pytest.fixture()
 def tmp_ini_path(tmp_path):
     """Temporary INI file path for testing."""
     return tmp_path / "test_config.ini"
