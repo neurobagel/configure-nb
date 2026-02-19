@@ -84,6 +84,8 @@ def main(
         config_class = COMPOSE_PROFILE_TO_CLASS_MAP[compose_profile]
         logger.info(f"Deployment configuration: {compose_profile}")
 
+    # Create a copy of the INI contents so that we can strip off sections related to federation node definition
+    # before validating the sections related to deployment configuration variables
     ini_contents_to_validate = ini_contents.copy()
     in_federation_nodes = {}
     if compose_profile != "node":
@@ -121,6 +123,7 @@ def main(
             else:
                 out_federation_nodes.append(
                     InternalFederationNode(
+                        # TODO: Should we rename this to "Default local graph" or similar to convey that it is a default?
                         name="Local graph 1",
                         api_url="http://api:8000",
                     )
@@ -145,6 +148,10 @@ def main(
                     f"The configuration contains {len(node_validation_errs)} invalid definition(s) of internal federation nodes:\n"
                     + "\n\n".join(node_validation_errs),
                 )
+
+        logger.info(
+            f"{len(out_federation_nodes)} internal federation node(s) will be included for federation."
+        )
 
         out_federation_nodes = InternalFederationNodes(
             out_federation_nodes
