@@ -21,7 +21,8 @@ class InternalFederationNode(BaseModel):
         Field(validation_alias="API_URL", serialization_alias="ApiURL"),
     ]
 
-    model_config = ConfigDict(extra="forbid")
+    # populate_by_name allows us to still construct instances using the original Pydantic field names in code
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     @field_validator("name")
     @classmethod
