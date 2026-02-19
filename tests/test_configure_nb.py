@@ -4,8 +4,7 @@ import pytest
 from dotenv import dotenv_values
 
 from configure_nb.cli import configure_nb
-
-from .helpers import write_test_ini_file
+from configure_nb.utility import write_text_file
 
 
 @pytest.fixture()
@@ -85,7 +84,7 @@ def test_quickstart_dotenv_created_when_profile_not_specified(
 [service:graph]
 LOCAL_GRAPH_DATA=/data/my_first_jsonlds
 """
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
@@ -123,7 +122,7 @@ def test_quickstart_dotenv_created_when_ini_sections_empty(
 
 """
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
@@ -153,7 +152,7 @@ NB_RETURN_AGG=false
 COMPOSE_PROFILES=not_a_profile
 """
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
@@ -219,7 +218,7 @@ COMPOSE_PROFILES=node
         "COMPOSE_PROJECT_NAME": "neurobagel_node",
     }
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
@@ -284,7 +283,7 @@ API_URL=https://myinstitute.org/node
         "COMPOSE_PROJECT_NAME": "neurobagel_portal",
     }
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
@@ -349,7 +348,7 @@ def test_unrecognized_ini_section_ignored_with_warning(
     ini_content,
     expected_warning,
 ):
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
@@ -424,7 +423,7 @@ def test_unrecognized_variables_ignored_with_warning(
     ini_content,
     expected_warnings,
 ):
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
@@ -468,7 +467,7 @@ COMPOSE_PROFILES=node
         "must not include a URL scheme",
     ]
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,

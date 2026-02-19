@@ -2,8 +2,6 @@ import pytest
 
 from configure_nb import utility as util
 
-from .helpers import write_test_ini_file
-
 
 @pytest.mark.parametrize(
     "ini_content, expected_dict",
@@ -30,7 +28,7 @@ from .helpers import write_test_ini_file
     ],
 )
 def test_load_ini_as_dict(tmp_ini_path, ini_content, expected_dict):
-    write_test_ini_file(ini_content, tmp_ini_path)
+    util.write_text_file(tmp_ini_path, ini_content)
     ini_dict = util.load_ini_as_dict(tmp_ini_path)
 
     assert ini_dict == expected_dict
