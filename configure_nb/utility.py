@@ -1,4 +1,5 @@
 import configparser
+import json
 from pathlib import Path
 
 from .logger import log_error, logger
@@ -43,3 +44,15 @@ def config_to_env_str(config: BaseProfile) -> str:
             ""
         )  # Add a newline after each section for readability
     return "\n".join(env_lines)
+
+
+def write_json(path: Path, data: dict):
+    """Write a dictionary to a JSON file."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def write_text_file(path: Path, contents: str):
+    """Write a string to a text file."""
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(contents)
