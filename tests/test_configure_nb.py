@@ -232,8 +232,12 @@ COMPOSE_PROFILES=node
 
     # Use dict to remove ordering from dotenv values for less brittle assertion
     env = dict(dotenv_values(tmp_dotenv_path))
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
 
     assert env == expected_env
+    assert len(warnings) == 0
     assert "configuration: node" in caplog.text
 
 
@@ -296,8 +300,12 @@ API_URL=https://myinstitute.org/node
     )
 
     env = dict(dotenv_values(tmp_dotenv_path))
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
 
     assert env == expected_env
+    assert len(warnings) == 0
     assert "configuration: portal" in caplog.text
 
 
