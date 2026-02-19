@@ -87,10 +87,10 @@ def main(
     ini_contents_to_validate = ini_contents.copy()
     in_federation_nodes = {}
     if compose_profile != "node":
-        for node_validation_err in ini_contents:
-            if node_validation_err.startswith(FEDERATION_NODE_SECTION_PREFIX):
-                in_federation_nodes[node_validation_err] = (
-                    ini_contents_to_validate.pop(node_validation_err)
+        for section in ini_contents:
+            if section.startswith(FEDERATION_NODE_SECTION_PREFIX):
+                in_federation_nodes[section] = ini_contents_to_validate.pop(
+                    section
                 )
 
     try:
