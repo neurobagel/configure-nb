@@ -61,7 +61,7 @@ from configure_nb.cli import configure_nb
         ),
     ],
 )
-def test_valid_ini_node_definition_sections_produce_correct_federation_nodes_config(
+def test_valid_node_definition_sections_produce_correct_federation_nodes_config(
     runner,
     tmp_path,
     tmp_ini_path,
@@ -275,7 +275,7 @@ COMPOSE_PROFILES=portal
         ),
     ],
 )
-def test_any_invalid_node_definition_raises_error(
+def test_any_invalid_federation_node_definition_raises_error(
     runner,
     tmp_path,
     tmp_ini_path,
@@ -326,3 +326,67 @@ COMPOSE_PROFILES=portal
     )
     for part in expected_err:
         assert part in caplog.text
+
+
+def test_federation_node_sections_ignored_with_warning_for_node_deployment(
+    runner,
+    tmp_path,
+    tmp_ini_path,
+    tmp_dotenv_path,
+    tmp_federation_nodes_config_path,
+    caplog,
+    propagate_warnings,
+):
+    """
+    Test that when the INI file contains [node:*] sections but specifies a node deployment profile,
+    these sections are treated like any other sections not recognized by the profile
+    and are ignored with a warning.
+    """
+    ini_content = """
+    [service:node-api]
+    NB_NAPI_DOMAIN=testdomain.org
+    NB_NAPI_BASE_PATH=/node1
+
+    [service:graph]
+    NB_GRAPH_USERNAME=testuser
+    LOCAL_GRAPH_DATA=/data/test_data
+
+    [compose]
+    COMPOSE_PROFILES=node
+
+    [node:1]
+    NAME=Local node
+    API_URL=https://test_domain.org/node1
+
+    [node:2]
+    NAME=Other site's node
+    API_URL=https://test_domain.org/node2
+    """
+    expected_warning = [
+        "sections that are not recognized or used for the Node deployment profile",
+        "node:1",
+        "node:2",
+    ]
+
+    util.write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
+
+    assert result.exit_code == 0
+    assert tmp_dotenv_path.exists()
+    assert not tmp_federation_nodes_config_path.exists()
+    assert len(warnings) == 1
+    for part in expected_warning:
+        assert part in warnings[0].message
