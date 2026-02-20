@@ -15,7 +15,9 @@ from .models import COMPOSE_PROFILE_TO_CLASS_MAP, BaseProfile, Quickstart
 
 FEDERATION_NODE_SECTION_PREFIX = "node:"
 
-configure_nb = typer.Typer()
+configure_nb = typer.Typer(
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @configure_nb.command()
