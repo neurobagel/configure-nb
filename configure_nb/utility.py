@@ -8,14 +8,22 @@ from .models import BaseProfile
 
 def load_ini_as_dict(file_path: Path) -> dict:
     """Read an INI file and return its contents as a nested dictionary."""
-    # NOTE: By default, when there are duplicate sections or keys, the last occurrence will be kept
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(strict=True)
     # By default, keys are converted to lowercase - convert instead to uppercase to match the expected environment variable format
     # We need to silence an erroneous mypy error here (see https://github.com/python/mypy/issues/5062)
     config.optionxform = lambda option: option.upper()  # type: ignore
 
     try:
         config.read(file_path)
+    except configparser.DuplicateSectionError as err:
+        log_error(
+            logger, f"INI file contains a duplicate section: \\[{err.section}]"
+        )
+    except configparser.DuplicateOptionError as err:
+        log_error(
+            logger,
+            f"Section \\[{err.section}] contains a duplicate variable: {err.option}",
+        )
     except configparser.Error as err:
         log_error(logger, f"Error reading INI file: {err}")
 
