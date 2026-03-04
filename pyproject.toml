@@ -12,8 +12,7 @@ maintainers = [
   { name = "Alyssa Dai", email = "alyssa.dai@mcgill.ca" },
   { name = "Arman Jahanpour", email = "arman.jahanpour@mcgill.ca" },
 ]
-# TODO: Replace APP DESCRIPTION
-description = "APP DESCRIPTION"
+description = "Generate complete configuration files for a Neurobagel deployment."
 readme = "README.md"
 classifiers = [
   "Development Status :: 1 - Planning",
@@ -40,17 +39,13 @@ test = [
 dev = ["configure-nb[test]", "pre-commit"]
 
 [project.scripts]
-# TODO: Replace entrypoint
 configure-nb = "configure_nb.cli:configure_nb"
 
-# ---- Packaging-only config ----
-# [tool.hatch.build.targets.wheel]
-# # TODO: Replace app_name
-# packages = ["app_name"]
+[tool.hatch.build.targets.wheel]
+packages = ["configure_nb"]
 
-# [tool.hatch.build.targets.sdist]
-# exclude = ["tests/**"]  # omit deeply nested test data from the source tarball
-# -------------------------------
+[tool.hatch.build.targets.sdist]
+exclude = ["tests/**"]  # omit deeply nested test data from the source tarball
 
 [tool.hatch.version]
 source = "vcs"  # use git tags to automatically determine the project version using hatch-vcs
