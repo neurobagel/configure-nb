@@ -39,9 +39,10 @@ def main(
         typer.Option(
             "--output-dir",
             "-o",
-            help="Path to the directory where the generated .env file should be saved.",
+            help="Path to the directory where generated configuration files should be saved.",
             file_okay=False,
             dir_okay=True,
+            exists=True,
             resolve_path=True,
         ),
     ] = Path("."),
@@ -57,7 +58,8 @@ def main(
     # TODO: Add option to explicitly allow overwriting?
 ):
     """
-    Generate a valid .env file for Neurobagel deployment configuration.
+    Generate valid configuration files for Neurobagel deployment configuration.
+    Always creates a .env file; additionally creates a local_nb_nodes.json file for a test or portal deployment.
     """
     out_dotenv_path = output_dir / ".env"
 
