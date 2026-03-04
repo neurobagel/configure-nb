@@ -2,6 +2,8 @@ import configparser
 import json
 from pathlib import Path
 
+from pydantic import JsonValue
+
 from .logger import log_error, logger
 from .models import BaseProfile
 
@@ -54,8 +56,8 @@ def config_to_env_str(config: BaseProfile) -> str:
     return "\n".join(env_lines)
 
 
-def write_json(path: Path, data: dict):
-    """Write a dictionary to a JSON file."""
+def write_json(path: Path, data: JsonValue):
+    """Write data to a JSON file."""
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -66,8 +68,8 @@ def write_text_file(path: Path, contents: str):
         f.write(contents)
 
 
-def read_json(path: Path) -> dict:
-    """Read a JSON file and return its contents as a dictionary."""
+def read_json(path: Path) -> JsonValue:
+    """Read a JSON file and return its contents as a Python object."""
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
     return data
