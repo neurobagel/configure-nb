@@ -169,7 +169,9 @@ COMPOSE_PROFILES=not_a_profile
     assert result.exit_code != 0
     assert not tmp_dotenv_path.exists()
     assert len(errors) == 1
-    assert "Invalid COMPOSE_PROFILES value: not_a_profile" in errors[0].message
+    assert (
+        "Invalid COMPOSE_PROFILES value: 'not_a_profile'" in errors[0].message
+    )
 
 
 def test_all_node_vars_defined_when_node_profile_specified(
