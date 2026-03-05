@@ -1,4 +1,3 @@
-import textwrap
 from pathlib import Path
 from typing import Annotated
 
@@ -7,13 +6,12 @@ import typer
 
 from . import utility as util
 from .federation_nodes_model import (
+    FEDERATION_NODE_SECTION_PREFIX,
     InternalFederationNode,
     InternalFederationNodes,
 )
 from .logger import VerbosityLevel, configure_logger, log_error, logger
-from .models import COMPOSE_PROFILE_TO_CLASS_MAP, BaseProfile, Quickstart
-
-FEDERATION_NODE_SECTION_PREFIX = "node:"
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, Quickstart
 
 configure_nb = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -63,6 +61,7 @@ def main(
     """
     out_dotenv_path = output_dir / ".env"
 
+    # Load configuration from INI file
     if config_file.exists():
         logger.info(f"Loading configuration from file: {config_file}")
         ini_contents = util.load_ini_as_dict(config_file)
@@ -72,35 +71,36 @@ def main(
         )
         ini_contents = {}
 
+    # Determine and validate deployment profile
     compose_profile = ini_contents.get("compose", {}).get("COMPOSE_PROFILES")
-    if not compose_profile:
+    config_class = util.get_config_class_for_compose_profile(compose_profile)
+    if config_class is None:
+        log_error(
+            logger,
+            f"Invalid COMPOSE_PROFILES value: {compose_profile!r}. "
+            f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
+        )
+    elif config_class is Quickstart:
         logger.info(
             "The COMPOSE_PROFILES variable was not set. Defaulting to a test deployment configuration."
         )
-        config_class: type[BaseProfile] = Quickstart
-    elif compose_profile not in COMPOSE_PROFILE_TO_CLASS_MAP:
-        log_error(
-            logger,
-            f"Invalid COMPOSE_PROFILES value: {compose_profile}. "
-            f"Expected one of {list(COMPOSE_PROFILE_TO_CLASS_MAP.keys())}.",
-        )
     else:
-        config_class = COMPOSE_PROFILE_TO_CLASS_MAP[compose_profile]
         logger.info(f"Deployment configuration: {compose_profile}")
 
-    # Create a copy of the INI contents so that we can strip off sections related to federation node definition
-    # before validating the sections related to deployment configuration variables
-    ini_contents_to_validate = ini_contents.copy()
-    in_federation_nodes = {}
-    if compose_profile != "node":
-        for section in ini_contents:
-            if section.startswith(FEDERATION_NODE_SECTION_PREFIX):
-                in_federation_nodes[section] = ini_contents_to_validate.pop(
-                    section
-                )
+    # Extract sections related to environment variables vs federation node definitions (if any)
+    # NOTE: We skip this for the "node" profile so that the config class validation can detect any sections
+    # related to federation node definition as unrecognized for that profile
+    if compose_profile == "node":
+        deployment_config_vars = ini_contents.copy()
+        in_federation_nodes: dict[str, dict] = {}
+    else:
+        deployment_config_vars, in_federation_nodes = (
+            util.split_federation_node_sections_from_env_vars(ini_contents)
+        )
 
+    # Validate deployment configuration variables
     try:
-        config = config_class.model_validate(ini_contents_to_validate)
+        config = config_class.model_validate(deployment_config_vars)
     except pydantic.ValidationError as err:
         if config_file.exists():
             # TODO: Can customize validation error from Pydantic to be more user friendly
@@ -115,37 +115,18 @@ def main(
     if compose_profile != "node":
         out_nodes_json_path = output_dir / "local_nb_nodes.json"
 
-        out_federation_nodes = []
-        if not in_federation_nodes:
-            if compose_profile == "portal":
-                log_error(
-                    logger,
-                    "No internal nodes to federate were defined in the configuration INI file. "
-                    "For a 'portal' deployment, you must define at least one internal node to federate over "
-                    f"using a section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
-                )
-            else:
-                out_federation_nodes.append(
-                    InternalFederationNode(
-                        # TODO: Should we rename this to "Default local graph" or similar to convey that it is a default?
-                        name="Local graph 1",
-                        api_url="http://api:8000",
-                    )
-                )
-        else:
-            # TODO: Can refactor out this section into a util
-            node_validation_errs = []
-            for node_id, node_definition in in_federation_nodes.items():
-                try:
-                    out_federation_nodes.append(
-                        InternalFederationNode.model_validate(node_definition)
-                    )
-                except pydantic.ValidationError as err:
-                    node_validation_err = (
-                        f"- \\[{node_id}]\n"
-                        f"{textwrap.indent(str(err), '  ')}"
-                    )
-                    node_validation_errs.append(node_validation_err)
+        # Validate internal federation nodes
+        if compose_profile == "portal" and not in_federation_nodes:
+            log_error(
+                logger,
+                "No internal nodes to federate were defined in the configuration INI file. "
+                "For a 'portal' deployment, you must define at least one internal node to federate over "
+                f"using a section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
+            )
+        if in_federation_nodes:
+            node_validation_errs = util.validate_federation_node_definitions(
+                in_federation_nodes
+            )
             if node_validation_errs:
                 log_error(
                     logger,
@@ -153,6 +134,21 @@ def main(
                     + "\n\n".join(node_validation_errs),
                 )
 
+        # Collect internal federation nodes for output
+        out_federation_nodes = []
+        if compose_profile is None and not in_federation_nodes:
+            out_federation_nodes.append(
+                InternalFederationNode(
+                    # TODO: Should we rename this to "Default local graph" or similar to convey that it is a default?
+                    name="Local graph 1",
+                    api_url="http://api:8000",
+                )
+            )
+        else:
+            for node_definition in in_federation_nodes.values():
+                out_federation_nodes.append(
+                    InternalFederationNode.model_validate(node_definition)
+                )
         logger.info(
             f"{len(out_federation_nodes)} internal federation node(s) will be included for federation."
         )

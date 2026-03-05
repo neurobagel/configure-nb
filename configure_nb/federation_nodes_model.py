@@ -9,6 +9,8 @@ from pydantic import (
     field_validator,
 )
 
+FEDERATION_NODE_SECTION_PREFIX = "node:"
+
 
 class InternalFederationNode(BaseModel):
     """Model for the definition of an internal or local node to be federated by the federation API."""

@@ -1,11 +1,17 @@
 import configparser
 import json
+import textwrap
 from pathlib import Path
 
+import pydantic
 from pydantic import JsonValue
 
+from .federation_nodes_model import (
+    FEDERATION_NODE_SECTION_PREFIX,
+    InternalFederationNode,
+)
 from .logger import log_error, logger
-from .models import BaseProfile
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, BaseProfile, Quickstart
 
 
 def load_ini_as_dict(file_path: Path) -> dict:
@@ -33,6 +39,53 @@ def load_ini_as_dict(file_path: Path) -> dict:
         return {}
 
     return {section: dict(config[section]) for section in config.sections()}
+
+
+def get_config_class_for_compose_profile(
+    compose_profile: str | None,
+) -> type[BaseProfile] | None:
+    """
+    Return the deployment configuration corresponding to the value of COMPOSE_PROFILES,
+    or None if the value is invalid.
+    """
+    if not compose_profile:
+        return Quickstart
+    return COMPOSE_PROFILE_TO_CLASS_MAP.get(compose_profile)
+
+
+def split_federation_node_sections_from_env_vars(
+    ini_contents: dict,
+) -> tuple[dict, dict]:
+    """
+    Split INI sections into those defining deployment configuration environment variables
+    and those defining internal federation nodes, based on the section header prefix.
+    """
+    env_vars = {}
+    in_federation_nodes = {}
+
+    for section, values in ini_contents.items():
+        if section.startswith(FEDERATION_NODE_SECTION_PREFIX):
+            in_federation_nodes[section] = values
+        else:
+            env_vars[section] = values
+
+    return env_vars, in_federation_nodes
+
+
+def validate_federation_node_definitions(
+    in_federation_nodes: dict,
+) -> list[str]:
+    """Validate the definitions of internal federation nodes and return a list of any error messages."""
+    node_validation_errs = []
+    for node_id, node_definition in in_federation_nodes.items():
+        try:
+            InternalFederationNode.model_validate(node_definition)
+        except pydantic.ValidationError as err:
+            node_validation_err = (
+                f"- \\[{node_id}]\n" f"{textwrap.indent(str(err), '  ')}"
+            )
+            node_validation_errs.append(node_validation_err)
+    return node_validation_errs
 
 
 def config_to_env_str(config: BaseProfile) -> str:
