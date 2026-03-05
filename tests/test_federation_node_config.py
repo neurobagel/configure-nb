@@ -211,7 +211,7 @@ COMPOSE_PROFILES=portal
 
 
 @pytest.mark.parametrize(
-    "node_sections, expected_num_invalid_nodes, expected_err",
+    "node_sections, expected_invalid_node_count, expected_err",
     [
         (
             """
@@ -284,7 +284,7 @@ def test_any_invalid_federation_node_definition_raises_error(
     caplog,
     propagate_errors,
     node_sections,
-    expected_num_invalid_nodes,
+    expected_invalid_node_count,
     expected_err,
 ):
     """
@@ -321,7 +321,7 @@ COMPOSE_PROFILES=portal
     assert not tmp_federation_nodes_config_path.exists()
     assert len(caplog.records) == 1
     assert (
-        f"{expected_num_invalid_nodes} invalid definition(s) of internal federation nodes"
+        f"{expected_invalid_node_count} invalid definition(s) of internal federation nodes"
         in caplog.text
     )
     for part in expected_err:

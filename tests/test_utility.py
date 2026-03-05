@@ -69,3 +69,86 @@ def test_duplicate_section_or_option_in_ini_raises_err(
     assert len(caplog.records) == 1
     for part in expected_err:
         assert part in caplog.text
+
+
+def test_split_federation_node_sections_from_env_vars():
+    """
+    Test that INI sections with the prefix for an internal federation node definition
+    are correctly split from other sections.
+    """
+    ini_contents = {
+        "service:federation-api": {
+            "NB_FAPI_DOMAIN": "myinstitute.org",
+            "NB_FAPI_BASE_PATH": "/federate",
+        },
+        "service:query": {"NB_QUERY_DOMAIN": "myinstitute.org"},
+        "compose": {"COMPOSE_PROFILES": "portal"},
+        "node:1": {
+            "NAME": "Site 1 node",
+            "API_URL": "https://myinstitute.org/node1",
+        },
+        "node:2": {
+            "NAME": "Site 2 node",
+            "API_URL": "https://myinstitute.org/node2",
+        },
+    }
+
+    deployment_env_vars, federation_nodes = (
+        util.split_federation_node_sections_from_env_vars(ini_contents)
+    )
+
+    assert deployment_env_vars == {
+        "service:federation-api": {
+            "NB_FAPI_DOMAIN": "myinstitute.org",
+            "NB_FAPI_BASE_PATH": "/federate",
+        },
+        "service:query": {"NB_QUERY_DOMAIN": "myinstitute.org"},
+        "compose": {"COMPOSE_PROFILES": "portal"},
+    }
+    assert federation_nodes == {
+        "node:1": {
+            "NAME": "Site 1 node",
+            "API_URL": "https://myinstitute.org/node1",
+        },
+        "node:2": {
+            "NAME": "Site 2 node",
+            "API_URL": "https://myinstitute.org/node2",
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "federation_node_definitions, expected_invalid_node_count",
+    [
+        (
+            {
+                "node:1": {"API_URL": "https://myinstitute.org/node1"},
+                "node:2": {
+                    "NAME": "Local node 2",
+                    "API_URL": "https://myinstitute.org/node2",
+                },
+            },
+            1,
+        ),
+        (
+            {
+                "node:1": {"NAME": "Local node 1", "API_URL": "not a URL"},
+                "node:2": {
+                    "NAME": "Local node 2",
+                    "API_URL": "also not a URL",
+                },
+            },
+            2,
+        ),
+    ],
+)
+def test_validate_federation_node_definitions(
+    federation_node_definitions, expected_invalid_node_count
+):
+    """
+    Test that invalid definitions of internal federation nodes are correctly detected.
+    """
+    validation_errs = util.validate_federation_node_definitions(
+        federation_node_definitions
+    )
+    assert len(validation_errs) == expected_invalid_node_count
