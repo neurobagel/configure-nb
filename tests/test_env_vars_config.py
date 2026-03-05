@@ -4,8 +4,7 @@ import pytest
 from dotenv import dotenv_values
 
 from configure_nb.cli import configure_nb
-
-from .helpers import write_test_ini_file
+from configure_nb.utility import write_text_file
 
 
 @pytest.fixture()
@@ -55,13 +54,13 @@ def expected_quickstart_env_vars():
 
 
 def test_quickstart_dotenv_created_when_ini_missing(
-    runner, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner, tmp_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
 ):
     runner.invoke(
         configure_nb,
         [
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -74,21 +73,26 @@ def test_quickstart_dotenv_created_when_ini_missing(
 
 
 def test_quickstart_dotenv_created_when_profile_not_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    expected_quickstart_env_vars,
+    caplog,
 ):
     ini_content = """
 [service:graph]
 LOCAL_GRAPH_DATA=/data/my_first_jsonlds
 """
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -100,7 +104,12 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
 
 
 def test_quickstart_dotenv_created_when_ini_sections_empty(
-    runner, tmp_ini_path, tmp_dotenv_path, expected_quickstart_env_vars, caplog
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    expected_quickstart_env_vars,
+    caplog,
 ):
     """
     Test that when an INI file contains valid sections but has no variables defined (i.e., sections are empty),
@@ -113,15 +122,15 @@ def test_quickstart_dotenv_created_when_ini_sections_empty(
 
 """
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -133,7 +142,7 @@ def test_quickstart_dotenv_created_when_ini_sections_empty(
 
 
 def test_invalid_profile_raises_error(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog, propagate_errors
 ):
     ini_content = """
 [service:node-api]
@@ -143,15 +152,15 @@ NB_RETURN_AGG=false
 COMPOSE_PROFILES=not_a_profile
 """
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -160,11 +169,13 @@ COMPOSE_PROFILES=not_a_profile
     assert result.exit_code != 0
     assert not tmp_dotenv_path.exists()
     assert len(errors) == 1
-    assert "Invalid COMPOSE_PROFILES value: not_a_profile" in errors[0].message
+    assert (
+        "Invalid COMPOSE_PROFILES value: 'not_a_profile'" in errors[0].message
+    )
 
 
 def test_all_node_vars_defined_when_node_profile_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog
 ):
     ini_content = """
 [service:node-api]
@@ -209,27 +220,31 @@ COMPOSE_PROFILES=node
         "COMPOSE_PROJECT_NAME": "neurobagel_node",
     }
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
     # Use dict to remove ordering from dotenv values for less brittle assertion
     env = dict(dotenv_values(tmp_dotenv_path))
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
 
     assert env == expected_env
+    assert len(warnings) == 0
     assert "configuration: node" in caplog.text
 
 
 def test_all_portal_vars_defined_when_portal_profile_specified(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog
 ):
     ini_content = """
 [service:federation-api]
@@ -241,6 +256,10 @@ NB_QUERY_DOMAIN=myinstitute.org
 
 [compose]
 COMPOSE_PROFILES=portal
+
+[node:1]
+NAME=Local node
+API_URL=https://myinstitute.org/node
 """
 
     expected_env = {
@@ -270,21 +289,25 @@ COMPOSE_PROFILES=portal
         "COMPOSE_PROJECT_NAME": "neurobagel_portal",
     }
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
     env = dict(dotenv_values(tmp_dotenv_path))
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
 
     assert env == expected_env
+    assert len(warnings) == 0
     assert "configuration: portal" in caplog.text
 
 
@@ -328,21 +351,22 @@ COMPOSE_PROFILES=portal
 def test_unrecognized_ini_section_ignored_with_warning(
     runner,
     tmp_ini_path,
+    tmp_path,
     tmp_dotenv_path,
     caplog,
     propagate_warnings,
     ini_content,
     expected_warning,
 ):
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -402,21 +426,22 @@ def test_unrecognized_ini_section_ignored_with_warning(
 def test_unrecognized_variables_ignored_with_warning(
     runner,
     tmp_ini_path,
+    tmp_path,
     tmp_dotenv_path,
     caplog,
     propagate_warnings,
     ini_content,
     expected_warnings,
 ):
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -434,7 +459,7 @@ def test_unrecognized_variables_ignored_with_warning(
 
 
 def test_invalid_variable_value_raises_error(
-    runner, tmp_ini_path, tmp_dotenv_path, caplog, propagate_errors
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog, propagate_errors
 ):
     ini_content = """
 [service:node-api]
@@ -452,15 +477,15 @@ COMPOSE_PROFILES=node
         "must not include a URL scheme",
     ]
 
-    write_test_ini_file(ini_content, tmp_ini_path)
+    write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
         configure_nb,
         [
             "--config-file",
             tmp_ini_path,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 
@@ -475,7 +500,7 @@ COMPOSE_PROFILES=node
 
 
 def test_created_dotenv_matches_expected_output(
-    runner, tmp_dotenv_path, caplog, example_data_path
+    runner, tmp_path, tmp_dotenv_path, caplog, example_data_path
 ):
     """Smoke test that the .env created from a sample INI file matches the expected output in format and values."""
     ini_file = example_data_path / "1_valid_node_config.ini"
@@ -486,8 +511,8 @@ def test_created_dotenv_matches_expected_output(
         [
             "--config-file",
             ini_file,
-            "--output",
-            tmp_dotenv_path,
+            "--output-dir",
+            tmp_path,
         ],
     )
 

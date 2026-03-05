@@ -1,20 +1,37 @@
 import configparser
+import json
+import textwrap
 from pathlib import Path
 
+import pydantic
+from pydantic import JsonValue
+
+from .federation_nodes_model import (
+    FEDERATION_NODE_SECTION_PREFIX,
+    InternalFederationNode,
+)
 from .logger import log_error, logger
-from .models import BaseProfile
+from .models import COMPOSE_PROFILE_TO_CLASS_MAP, BaseProfile, Quickstart
 
 
 def load_ini_as_dict(file_path: Path) -> dict:
     """Read an INI file and return its contents as a nested dictionary."""
-    # NOTE: By default, when there are duplicate sections or keys, the last occurrence will be kept
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(strict=True)
     # By default, keys are converted to lowercase - convert instead to uppercase to match the expected environment variable format
     # We need to silence an erroneous mypy error here (see https://github.com/python/mypy/issues/5062)
     config.optionxform = lambda option: option.upper()  # type: ignore
 
     try:
         config.read(file_path)
+    except configparser.DuplicateSectionError as err:
+        log_error(
+            logger, f"INI file contains a duplicate section: \\[{err.section}]"
+        )
+    except configparser.DuplicateOptionError as err:
+        log_error(
+            logger,
+            f"Section \\[{err.section}] contains a duplicate variable: {err.option}",
+        )
     except configparser.Error as err:
         log_error(logger, f"Error reading INI file: {err}")
 
@@ -22,6 +39,53 @@ def load_ini_as_dict(file_path: Path) -> dict:
         return {}
 
     return {section: dict(config[section]) for section in config.sections()}
+
+
+def get_config_class_for_compose_profile(
+    compose_profile: str | None,
+) -> type[BaseProfile] | None:
+    """
+    Return the deployment configuration corresponding to the value of COMPOSE_PROFILES,
+    or None if the value is invalid.
+    """
+    if not compose_profile:
+        return Quickstart
+    return COMPOSE_PROFILE_TO_CLASS_MAP.get(compose_profile)
+
+
+def split_federation_node_sections_from_env_vars(
+    ini_contents: dict,
+) -> tuple[dict, dict]:
+    """
+    Split INI sections into those defining deployment configuration environment variables
+    and those defining internal federation nodes, based on the section header prefix.
+    """
+    env_vars = {}
+    in_federation_nodes = {}
+
+    for section, values in ini_contents.items():
+        if section.startswith(FEDERATION_NODE_SECTION_PREFIX):
+            in_federation_nodes[section] = values
+        else:
+            env_vars[section] = values
+
+    return env_vars, in_federation_nodes
+
+
+def validate_federation_node_definitions(
+    in_federation_nodes: dict,
+) -> list[str]:
+    """Validate the definitions of internal federation nodes and return a list of any error messages."""
+    node_validation_errs = []
+    for node_id, node_definition in in_federation_nodes.items():
+        try:
+            InternalFederationNode.model_validate(node_definition)
+        except pydantic.ValidationError as err:
+            node_validation_err = (
+                f"- \\[{node_id}]\n" f"{textwrap.indent(str(err), '  ')}"
+            )
+            node_validation_errs.append(node_validation_err)
+    return node_validation_errs
 
 
 def config_to_env_str(config: BaseProfile) -> str:
@@ -43,3 +107,22 @@ def config_to_env_str(config: BaseProfile) -> str:
             ""
         )  # Add a newline after each section for readability
     return "\n".join(env_lines)
+
+
+def write_json(path: Path, data: JsonValue):
+    """Write data to a JSON file."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def write_text_file(path: Path, contents: str):
+    """Write a string to a text file."""
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(contents)
+
+
+def read_json(path: Path) -> JsonValue:
+    """Read a JSON file and return its contents as a Python object."""
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data

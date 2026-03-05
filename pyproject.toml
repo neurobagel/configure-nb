@@ -65,6 +65,8 @@ filter_files = true
 line_length = 79
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]  # enables mypy to understand Pydantic models better (including runtime type coercion, etc.)
+
 ignore_missing_imports = true
 no_warn_no_return = true
 warn_redundant_casts = true
