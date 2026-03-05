@@ -4,76 +4,101 @@ from configure_nb import utility as util
 from configure_nb.cli import configure_nb
 
 
-@pytest.mark.parametrize(
-    "ini_content, expected_federation_nodes_config",
-    [
-        (
-            """
-            [service:federation-api]
-            NB_FAPI_DOMAIN=myinstitute.org
-            NB_FAPI_BASE_PATH=/federate
-
-            [service:query]
-            NB_QUERY_DOMAIN=myinstitute.org
-
-            [compose]
-            COMPOSE_PROFILES=portal
-
-            [node:1]
-            NAME=Site 1 node
-            API_URL=https://myinstitute.org/node1
-
-            [node:2]
-            NAME=Site 2 node
-            API_URL=https://myinstitute.org/node2
-            """,
-            [
-                {
-                    "NodeName": "Site 1 node",
-                    "ApiURL": "https://myinstitute.org/node1",
-                },
-                {
-                    "NodeName": "Site 2 node",
-                    "ApiURL": "https://myinstitute.org/node2",
-                },
-            ],
-        ),
-        (
-            """
-            [service:graph]
-            LOCAL_GRAPH_DATA=/data/my_first_jsonlds
-
-            [node:local]
-            NAME=My local node
-            API_URL=http://api:8000/
-
-            [node:other-site]
-            NAME=Other site's node
-            API_URL=https://myinstitute.org/othernode
-            """,
-            [
-                {"NodeName": "My local node", "ApiURL": "http://api:8000/"},
-                {
-                    "NodeName": "Other site's node",
-                    "ApiURL": "https://myinstitute.org/othernode",
-                },
-            ],
-        ),
-    ],
-)
 def test_valid_node_definition_sections_produce_correct_federation_nodes_config(
     runner,
     tmp_path,
     tmp_ini_path,
     tmp_federation_nodes_config_path,
-    ini_content,
-    expected_federation_nodes_config,
     caplog,
 ):
     """
     Test that valid federation node definitions in the configuration INI are correctly parsed
     and included in the generated federation node config JSON file.
     """
+    ini_content = """
+[service:federation-api]
+NB_FAPI_DOMAIN=myinstitute.org
+NB_FAPI_BASE_PATH=/federate
+
+[service:query]
+NB_QUERY_DOMAIN=myinstitute.org
+
+[compose]
+COMPOSE_PROFILES=portal
+
+[node:1]
+NAME=Site 1 node
+API_URL=https://myinstitute.org/node1
+
+[node:2]
+NAME=Site 2 node
+API_URL=https://myinstitute.org/node2
+"""
+    expected_federation_nodes_config = [
+        {
+            "NodeName": "Site 1 node",
+            "ApiURL": "https://myinstitute.org/node1",
+        },
+        {
+            "NodeName": "Site 2 node",
+            "ApiURL": "https://myinstitute.org/node2",
+        },
+    ]
+
+    util.write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    federation_nodes_config = util.read_json(tmp_federation_nodes_config_path)
+
+    assert result.exit_code == 0
+    assert tmp_federation_nodes_config_path.exists()
+    assert (
+        f"{len(expected_federation_nodes_config)} internal federation node(s) will be included"
+        in caplog.text
+    )
+    assert federation_nodes_config == expected_federation_nodes_config
+
+
+def test_correct_federation_nodes_config_created_for_quickstart_ini_with_nodes_defined(
+    runner,
+    tmp_path,
+    tmp_ini_path,
+    tmp_federation_nodes_config_path,
+    caplog,
+):
+    """
+    Test that for a quickstart deployment config, valid federation node definitions
+    are still correctly parsed and included in the output federation node config JSON file.
+    """
+    ini_content = """
+[service:graph]
+LOCAL_GRAPH_DATA=/data/my_first_jsonlds
+
+[node:local]
+NAME=My local node
+API_URL=http://api:8000/
+
+[node:other-site]
+NAME=Other site's node
+API_URL=https://myinstitute.org/othernode
+"""
+    expected_federation_nodes_config = [
+        {"NodeName": "My local node", "ApiURL": "http://api:8000/"},
+        {
+            "NodeName": "Other site's node",
+            "ApiURL": "https://myinstitute.org/othernode",
+        },
+    ]
+
     util.write_text_file(tmp_ini_path, ini_content)
 
     result = runner.invoke(
