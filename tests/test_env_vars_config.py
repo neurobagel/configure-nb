@@ -520,3 +520,43 @@ def test_created_dotenv_matches_expected_output(
     assert "Loading configuration from file" in caplog.text
     assert tmp_dotenv_path.exists()
     assert tmp_dotenv_path.read_text() == expected_env_file.read_text()
+
+
+@pytest.mark.parametrize(
+    "raw_graph_db_name",
+    ["cool_database", "repositories/cool_database"],
+)
+def test_prefix_added_to_graph_db_name_if_missing(
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    caplog,
+    propagate_warnings,
+    raw_graph_db_name,
+):
+    """
+    Test that the prefix 'repositories/' is automatically prepended to the value of NB_GRAPH_DB
+    in the output .env only if it is missing from the raw INI value.
+    """
+    ini_content = f"""
+[service:graph]
+NB_GRAPH_DB={raw_graph_db_name}
+"""
+    write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    env = dotenv_values(tmp_dotenv_path)
+
+    assert result.exit_code == 0
+    assert len(caplog.records) == 0
+    assert env["NB_GRAPH_DB"] == "repositories/cool_database"

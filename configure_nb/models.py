@@ -39,6 +39,14 @@ def domain_has_no_url_scheme(domain: str) -> str:
     return domain
 
 
+def add_prefix_to_database_name(name: str) -> str:
+    """If the provided database name does not start with the expected prefix, add it."""
+    expected_prefix = "repositories/"
+    if not name.startswith(expected_prefix):
+        return expected_prefix + name
+    return name
+
+
 def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
     """Return fields that are present in the input data but are not defined in the Pydantic model."""
     recognized_fields = {
@@ -83,7 +91,9 @@ class Graph(BaseService):
         str, Field(alias="NB_GRAPH_USERNAME", default="DBUSER")
     ]
     graph_db: Annotated[
-        str, Field(alias="NB_GRAPH_DB", default="repositories/my_db")
+        str,
+        Field(alias="NB_GRAPH_DB", default="repositories/my_db"),
+        AfterValidator(add_prefix_to_database_name),
     ]
     graph_data: Annotated[
         PurePosixPath, Field(alias="LOCAL_GRAPH_DATA", default="./data")
