@@ -39,11 +39,10 @@ dev = [
 ]
 
 [project.scripts]
-# TODO: Replace entrypoint
 configure-nb = "configure_nb.cli:configure_nb"
 
- [tool.hatch.build.targets.wheel]
- packages = ["configure_nb"]
+[tool.hatch.build.targets.wheel]
+packages = ["configure_nb"]
 
 [tool.hatch.build.targets.sdist]
 exclude = ["tests/**"]  # omit deeply nested test data from the source tarball
