@@ -12,7 +12,7 @@ maintainers = [
   { name = "Alyssa Dai", email = "alyssa.dai@mcgill.ca" },
   { name = "Arman Jahanpour", email = "arman.jahanpour@mcgill.ca" },
 ]
-description = "Configuration wizard for a Neurobagel deployment."
+description = "Generate complete configuration files for a Neurobagel deployment."
 readme = "README.md"
 classifiers = [
   "Development Status :: 1 - Planning",
@@ -69,6 +69,8 @@ filter_files = true
 line_length = 79
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]  # enables mypy to understand Pydantic models better (including runtime type coercion, etc.)
+
 ignore_missing_imports = true
 no_warn_no_return = true
 warn_redundant_casts = true
