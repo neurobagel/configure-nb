@@ -12,8 +12,7 @@ maintainers = [
   { name = "Alyssa Dai", email = "alyssa.dai@mcgill.ca" },
   { name = "Arman Jahanpour", email = "arman.jahanpour@mcgill.ca" },
 ]
-# TODO: Replace APP DESCRIPTION
-description = "APP DESCRIPTION"
+description = "Configuration wizard for a Neurobagel deployment."
 readme = "README.md"
 classifiers = [
   "Development Status :: 1 - Planning",
@@ -31,13 +30,13 @@ dependencies = [
   "pydantic"
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
   "pytest",
   "pytest-cov",
-  "python-dotenv"
+  "python-dotenv",
+  "pre-commit"
 ]
-dev = ["configure-nb[test]", "pre-commit"]
 
 [project.scripts]
 # TODO: Replace entrypoint
