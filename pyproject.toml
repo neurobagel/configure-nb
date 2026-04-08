@@ -42,14 +42,11 @@ dev = [
 # TODO: Replace entrypoint
 configure-nb = "configure_nb.cli:configure_nb"
 
-# ---- Packaging-only config ----
-# [tool.hatch.build.targets.wheel]
-# # TODO: Replace app_name
-# packages = ["app_name"]
+ [tool.hatch.build.targets.wheel]
+ packages = ["configure_nb"]
 
-# [tool.hatch.build.targets.sdist]
-# exclude = ["tests/**"]  # omit deeply nested test data from the source tarball
-# -------------------------------
+[tool.hatch.build.targets.sdist]
+exclude = ["tests/**"]  # omit deeply nested test data from the source tarball
 
 [tool.hatch.version]
 source = "vcs"  # use git tags to automatically determine the project version using hatch-vcs
