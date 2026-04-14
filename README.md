@@ -30,7 +30,7 @@ Configuration wizard for a Neurobagel deployment.
     ```bash
     uv sync --group dev
 
-    4. To run `configure-nb` during development, you can either run it directly with `uv`:
+    4. To run `configure-nb` during development, you can run it directly with `uv`:
     ```bash
     uv run configure-nb [OPTIONS]
     ```
