@@ -30,13 +30,13 @@ dependencies = [
   "pydantic"
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
   "pytest",
   "pytest-cov",
-  "python-dotenv"
+  "python-dotenv",
+  "pre-commit"
 ]
-dev = ["configure-nb[test]", "pre-commit"]
 
 [project.scripts]
 configure-nb = "configure_nb.cli:configure_nb"

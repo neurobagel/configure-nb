@@ -16,7 +16,7 @@ Configuration wizard for a Neurobagel deployment.
 ## Development environment
 
 ### Setting up a local development environment
-1. Set up a Python environment (using a tool such as [venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#create-and-use-virtual-environments)).
+1. Set up a Python environment. We [use `uv` for this](https://docs.astral.sh/uv/getting-started/installation/).
 
 2. Clone the repository
 
@@ -28,11 +28,15 @@ Configuration wizard for a Neurobagel deployment.
 3. Install the CLI and all development dependencies in editable mode:
 
     ```bash
-    pip install -e ".[dev]"
+    uv sync --group dev
+
+    4. To run `configure-nb` during development, you can run it directly with `uv`:
+    ```bash
+    uv run configure-nb [OPTIONS]
     ```
 
 Confirm that everything works by running the tests: 
-`pytest`
+`uv run pytest`
 
 ### Setting up code formatting and linting (recommended)
 
@@ -42,7 +46,7 @@ according to the consistent code style set for this project.
 
 Inside the repo, run the following to install the configured pre-commit "hooks":
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 pre-commit will now run automatically whenever you run `git commit`.
