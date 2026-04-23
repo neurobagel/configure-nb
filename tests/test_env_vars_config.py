@@ -560,3 +560,46 @@ NB_GRAPH_DB={raw_graph_db_name}
     assert result.exit_code == 0
     assert len(caplog.records) == 0
     assert env["NB_GRAPH_DB"] == "repositories/cool_database"
+
+
+@pytest.mark.parametrize(
+    "graph_secrets_path,graph_data_path",
+    [
+        ("./secrets", "./data"),
+        ("../secrets", "../data"),
+    ],
+)
+def test_filesystem_path_variables_not_normalized_in_dotenv(
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    graph_secrets_path,
+    graph_data_path,
+):
+    """
+    Test that filesystem path values from the .ini are preserved unchanged in the output .env.
+    This ensures that explicit paths (e.g., with ./) remain intact for bind mounting in Docker Compose.
+    """
+    ini_content = f"""
+[service:graph]
+NB_GRAPH_SECRETS_PATH={graph_secrets_path}
+LOCAL_GRAPH_DATA={graph_data_path}
+"""
+    write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    env = dotenv_values(tmp_dotenv_path)
+
+    assert result.exit_code == 0
+    assert env["NB_GRAPH_SECRETS_PATH"] == graph_secrets_path
+    assert env["LOCAL_GRAPH_DATA"] == graph_data_path
