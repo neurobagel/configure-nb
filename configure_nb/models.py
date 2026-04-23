@@ -1,4 +1,3 @@
-from pathlib import PurePosixPath
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import (
@@ -45,6 +44,16 @@ def add_prefix_to_database_name(name: str) -> str:
     if not name.startswith(expected_prefix):
         return expected_prefix + name
     return name
+
+
+def filesystem_path_is_explicit(path: str) -> str:
+    """Raise an error if the provided value for a path variable is not an explicit path."""
+    if not path.startswith(("./", "../", "/")):
+        raise ValueError(
+            "Path must be an explicit path and start with './', '../', or '/' to ensure it is correctly interpreted as a local directory by Docker Compose. "
+            "Example: use './data' instead of 'data'."
+        )
+    return path
 
 
 def _get_extra_fields(cls: type[BaseModel], data: dict) -> set[str]:
@@ -96,14 +105,17 @@ class Graph(BaseService):
         AfterValidator(add_prefix_to_database_name),
     ]
     graph_data: Annotated[
-        PurePosixPath, Field(alias="LOCAL_GRAPH_DATA", default="./data")
+        str,
+        Field(alias="LOCAL_GRAPH_DATA", default="./data"),
+        AfterValidator(filesystem_path_is_explicit),
     ]
     graph_port_host: Annotated[
         str, Field(alias="NB_GRAPH_PORT_HOST", default="7200")
     ]
     graph_secrets_path: Annotated[
-        PurePosixPath,
+        str,
         Field(alias="NB_GRAPH_SECRETS_PATH", default="./secrets"),
+        AfterValidator(filesystem_path_is_explicit),
     ]
     graph_memory: Annotated[str, Field(alias="NB_GRAPH_MEMORY", default="2G")]
 

@@ -469,7 +469,7 @@ NB_NAPI_BASE_PATH=node
 [compose]
 COMPOSE_PROFILES=node
 """
-    expected_warning = [
+    expected_error = [
         "problems with configuration values",
         "NB_NAPI_BASE_PATH",
         "must start with a leading slash",
@@ -495,7 +495,7 @@ COMPOSE_PROFILES=node
     assert not tmp_dotenv_path.exists()
     assert len(errors) == 1
 
-    for part in expected_warning:
+    for part in expected_error:
         assert part in errors[0].message
 
 
@@ -560,3 +560,77 @@ NB_GRAPH_DB={raw_graph_db_name}
     assert result.exit_code == 0
     assert len(caplog.records) == 0
     assert env["NB_GRAPH_DB"] == "repositories/cool_database"
+
+
+@pytest.mark.parametrize(
+    "graph_secrets_path,graph_data_path",
+    [
+        ("./secrets", "./data"),
+        ("../secrets", "../data"),
+    ],
+)
+def test_filesystem_path_variables_not_normalized_in_dotenv(
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    graph_secrets_path,
+    graph_data_path,
+):
+    """
+    Test that filesystem path values from the .ini are preserved unchanged in the output .env.
+    This ensures that explicit paths (e.g., with ./) remain intact for bind mounting in Docker Compose.
+    """
+    ini_content = f"""
+[service:graph]
+NB_GRAPH_SECRETS_PATH={graph_secrets_path}
+LOCAL_GRAPH_DATA={graph_data_path}
+"""
+    write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    env = dotenv_values(tmp_dotenv_path)
+
+    assert result.exit_code == 0
+    assert env["NB_GRAPH_SECRETS_PATH"] == graph_secrets_path
+    assert env["LOCAL_GRAPH_DATA"] == graph_data_path
+
+
+def test_non_explicit_filesystem_path_raises_error(
+    runner, tmp_ini_path, tmp_path, tmp_dotenv_path, caplog, propagate_errors
+):
+    ini_content = """
+[service:graph]
+LOCAL_GRAPH_DATA=data
+"""
+    expected_error = ["LOCAL_GRAPH_DATA", "must be an explicit path"]
+
+    write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    errors = list(caplog.records)
+
+    assert result.exit_code != 0
+    assert not tmp_dotenv_path.exists()
+    assert len(errors) == 1
+
+    for part in expected_error:
+        assert part in errors[0].message
