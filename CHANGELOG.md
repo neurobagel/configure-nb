@@ -1,3 +1,28 @@
+# v0.1.1 (Thu Apr 23 2026)
+
+:tada: This release contains work from a new contributor! :tada:
+
+Thank you, Sebastian Urchs ([@surchs](https://github.com/surchs)), for all your work!
+
+#### 🚀 Enhancements
+
+- [ENH] Prepend `repositories/` prefix to `NB_GRAPH_DB` if is not present [#19](https://github.com/neurobagel/configure-nb/pull/19) ([@alyssadai](https://github.com/alyssadai))
+
+#### 🐛 Bug Fixes
+
+- [FIX] Ensure `LOCAL_GRAPH_DATA` and `NB_GRAPH_SECRETS_PATH` are explicit paths in `.env` [#35](https://github.com/neurobagel/configure-nb/pull/35) ([@alyssadai](https://github.com/alyssadai))
+
+#### 🏠 Internal
+
+- [MNT] Implement uv for dependency management [#28](https://github.com/neurobagel/configure-nb/pull/28) ([@surchs](https://github.com/surchs))
+
+#### Authors: 2
+
+- Alyssa Dai ([@alyssadai](https://github.com/alyssadai))
+- Sebastian Urchs ([@surchs](https://github.com/surchs))
+
+---
+
 # v0.1.0 (Thu Mar 05 2026)
 
 :tada: This release contains work from new contributors! :tada:
