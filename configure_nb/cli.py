@@ -120,10 +120,10 @@ def main(
         # Validate internal federation nodes
         if compose_profile == "portal" and not in_federation_nodes:
             logger.warning(
-                "No internal nodes to federate were defined in the configuration INI file. "
+                "No internal nodes were defined for query federation in the configuration INI file. "
                 f"Federation will be limited to nodes in the Neurobagel public node directory ({NB_PUBLIC_NODE_DIRECTORY}). "
-                "To define an internal node for your portal to federate over, "
-                f"use a section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
+                "To define an internal node to include in query federation, "
+                f"use an INI section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
             )
         if in_federation_nodes:
             node_validation_errs = util.validate_federation_node_definitions(

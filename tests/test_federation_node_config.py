@@ -236,7 +236,7 @@ COMPOSE_PROFILES=portal
     assert federation_nodes_config == []
     assert len(warnings) == 1
     assert (
-        "No internal nodes to federate were defined in the configuration INI file"
+        "No internal nodes were defined for query federation"
         in warnings[0].message
     )
     assert "0 internal federation node(s) will be included" in caplog.text
