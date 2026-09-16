@@ -13,6 +13,8 @@ from .federation_nodes_model import (
 from .logger import VerbosityLevel, configure_logger, log_error, logger
 from .models import COMPOSE_PROFILE_TO_CLASS_MAP, Quickstart
 
+NB_PUBLIC_NODE_DIRECTORY = "https://github.com/neurobagel/menu/blob/main/node_directory/neurobagel_public_nodes.json"
+
 configure_nb = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
@@ -117,11 +119,11 @@ def main(
 
         # Validate internal federation nodes
         if compose_profile == "portal" and not in_federation_nodes:
-            log_error(
-                logger,
+            logger.warning(
                 "No internal nodes to federate were defined in the configuration INI file. "
-                "For a 'portal' deployment, you must define at least one internal node to federate over "
-                f"using a section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
+                f"Federation will be limited to nodes in the Neurobagel public node directory ({NB_PUBLIC_NODE_DIRECTORY}). "
+                "To define an internal node for your portal to federate over, "
+                f"use a section header in the form \\[{FEDERATION_NODE_SECTION_PREFIX}<id>].",
             )
         if in_federation_nodes:
             node_validation_errs = util.validate_federation_node_definitions(
