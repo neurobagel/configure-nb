@@ -189,18 +189,18 @@ LOCAL_GRAPH_DATA=/data/my_first_jsonlds
     assert federation_nodes_config == expected_federation_nodes_config
 
 
-def test_missing_federation_nodes_for_portal_config_raises_error(
+def test_missing_federation_nodes_for_portal_config_emits_warning(
     runner,
     tmp_path,
     tmp_ini_path,
     tmp_dotenv_path,
     tmp_federation_nodes_config_path,
     caplog,
-    propagate_errors,
+    propagate_info,
 ):
     """
     Test that when a portal deployment is specified but no internal federation nodes are defined,
-    the app logs an error and exits.
+    the app logs a warning but still succeeds, generating an empty federation node configuration file.
     """
     ini_content = """
 [service:federation-api]
@@ -226,13 +226,20 @@ COMPOSE_PROFILES=portal
         ],
     )
 
-    assert result.exit_code != 0
-    assert not tmp_dotenv_path.exists()
-    assert not tmp_federation_nodes_config_path.exists()
+    federation_nodes_config = util.read_json(tmp_federation_nodes_config_path)
+    warnings = [
+        record for record in caplog.records if record.levelname == "WARNING"
+    ]
+
+    assert result.exit_code == 0
+    assert tmp_dotenv_path.exists()
+    assert federation_nodes_config == []
+    assert len(warnings) == 1
     assert (
-        "No internal nodes to federate were defined in the configuration INI file"
-        in caplog.text
+        "No internal nodes were defined for query federation"
+        in warnings[0].message
     )
+    assert "0 internal federation node(s) will be included" in caplog.text
 
 
 @pytest.mark.parametrize(
