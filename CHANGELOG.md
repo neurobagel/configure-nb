@@ -1,3 +1,15 @@
+# v0.1.2 (Wed Sep 23 2026)
+
+#### 🐛 Bug Fixes
+
+- [FIX] Warn instead of error when no internal federation nodes defined [#51](https://github.com/neurobagel/configure-nb/pull/51) ([@alyssadai](https://github.com/alyssadai))
+
+#### Authors: 1
+
+- Alyssa Dai ([@alyssadai](https://github.com/alyssadai))
+
+---
+
 # v0.1.1 (Thu Apr 23 2026)
 
 :tada: This release contains work from a new contributor! :tada:
