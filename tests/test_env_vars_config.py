@@ -636,3 +636,55 @@ LOCAL_GRAPH_DATA=data
 
     for part in expected_error:
         assert part in errors[0].message
+
+
+@pytest.mark.parametrize(
+    "ini_content",
+    [
+        """
+        [service:node-api]
+        NB_RETURN_AGG=false
+        NB_CATALOG_MODE=true
+        """,
+        """
+        [service:node-api]
+        NB_RETURN_AGG=false
+        NB_CATALOG_MODE=true
+
+        [compose]
+        COMPOSE_PROFILES=node
+        """,
+    ],
+)
+def test_return_agg_overridden_when_nb_catalog_mode_enabled(
+    runner,
+    tmp_ini_path,
+    tmp_path,
+    tmp_dotenv_path,
+    caplog,
+    propagate_warnings,
+    ini_content,
+):
+    write_text_file(tmp_ini_path, ini_content)
+
+    result = runner.invoke(
+        configure_nb,
+        [
+            "--config-file",
+            tmp_ini_path,
+            "--output-dir",
+            tmp_path,
+        ],
+    )
+
+    env = dotenv_values(tmp_dotenv_path)
+    warnings = list(caplog.records)
+
+    assert result.exit_code == 0
+    assert len(warnings) == 1
+    assert (
+        "NB_RETURN_AGG=False is incompatible with NB_CATALOG_MODE=True"
+        in warnings[0].message
+    )
+    assert env["NB_RETURN_AGG"] == "True"
+    assert env["NB_CATALOG_MODE"] == "True"
