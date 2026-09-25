@@ -7,6 +7,7 @@ from pydantic import (
     Field,
     model_validator,
 )
+from typing_extensions import Self
 
 from .logger import logger
 
@@ -147,6 +148,18 @@ class NodeAPI(BaseService):
         int, Field(alias="NB_MIN_CELL_SIZE", default=0)
     ]
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
+
+    @model_validator(mode="after")
+    def validate_return_agg_for_catalog_mode(self) -> Self:
+        if self.return_agg is False and self.catalog_mode is True:
+            logger.warning(
+                "In the INI file, NB_RETURN_AGG=False is incompatible with NB_CATALOG_MODE=True. "
+                "Catalog mode is an aggregate query mode intended to support dataset-level queries "
+                "when only data dictionaries are available, so no subject-level query results can be returned. "
+                "NB_RETURN_AGG will be overridden to True."
+            )
+            self.return_agg = True
+        return self
 
 
 class FederationAPI(BaseService):
