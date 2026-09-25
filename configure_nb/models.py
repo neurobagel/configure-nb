@@ -127,6 +127,9 @@ class NodeAPI(BaseService):
 
     napi_tag: Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
+    catalog_mode: Annotated[
+        bool, Field(alias="NB_CATALOG_MODE", default=False)
+    ]
     napi_base_path: Annotated[
         str,
         Field(alias="NB_NAPI_BASE_PATH", default=""),

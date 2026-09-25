@@ -30,6 +30,7 @@ def expected_quickstart_env_vars():
         "NB_GRAPH_PORT_HOST",
         # Node API
         "NB_RETURN_AGG",
+        "NB_CATALOG_MODE",
         "NB_MIN_CELL_SIZE",
         "NB_NAPI_TAG",
         "NB_NAPI_PORT_HOST",
@@ -197,6 +198,7 @@ COMPOSE_PROFILES=node
         "NB_MIN_CELL_SIZE": "5",
         "NB_NAPI_DOMAIN": "node.testdomain.org",
         # Defaults
+        "NB_CATALOG_MODE": "False",
         "NB_NAPI_BASE_PATH": "",
         "NB_NAPI_TAG": "latest",
         "NB_NAPI_PORT_HOST": "8000",
