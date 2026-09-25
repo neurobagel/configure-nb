@@ -152,11 +152,14 @@ class NodeAPI(BaseService):
     @model_validator(mode="after")
     def validate_return_agg_for_catalog_mode(self) -> Self:
         if self.return_agg is False and self.catalog_mode is True:
+            return_agg_alias = type(self).model_fields["return_agg"].alias
+            catalog_mode_alias = type(self).model_fields["catalog_mode"].alias
+
             logger.warning(
-                "In the INI file, NB_RETURN_AGG=False is incompatible with NB_CATALOG_MODE=True. "
+                f"In the INI file, {return_agg_alias}=False is incompatible with {catalog_mode_alias}=True. "
                 "Catalog mode is an aggregate query mode intended to support dataset-level queries "
                 "when only data dictionaries are available, so no subject-level query results can be returned. "
-                "NB_RETURN_AGG will be overridden to True."
+                f"{return_agg_alias} will be overridden to True."
             )
             self.return_agg = True
         return self
