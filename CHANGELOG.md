@@ -1,3 +1,16 @@
+# v0.2.0 (Tue Sep 29 2026)
+
+#### 🚀 Enhancements
+
+- [ENH] Add `NB_CATALOG_MODE` variable for toggling catalog mode for node API [#53](https://github.com/neurobagel/configure-nb/pull/53) ([@alyssadai](https://github.com/alyssadai))
+- [MNT] Manually bump pygments to >=2.20.0 to resolve CVE [#52](https://github.com/neurobagel/configure-nb/pull/52) ([@alyssadai](https://github.com/alyssadai))
+
+#### Authors: 1
+
+- Alyssa Dai ([@alyssadai](https://github.com/alyssadai))
+
+---
+
 # v0.1.2 (Wed Sep 23 2026)
 
 #### 🐛 Bug Fixes
