@@ -7,6 +7,7 @@ from pydantic import (
     Field,
     model_validator,
 )
+from typing_extensions import Self
 
 from .logger import logger
 
@@ -127,6 +128,9 @@ class NodeAPI(BaseService):
 
     napi_tag: Annotated[str, Field(alias="NB_NAPI_TAG", default="latest")]
     return_agg: Annotated[bool, Field(alias="NB_RETURN_AGG", default=True)]
+    catalog_mode: Annotated[
+        bool, Field(alias="NB_CATALOG_MODE", default=False)
+    ]
     napi_base_path: Annotated[
         str,
         Field(alias="NB_NAPI_BASE_PATH", default=""),
@@ -144,6 +148,21 @@ class NodeAPI(BaseService):
         int, Field(alias="NB_MIN_CELL_SIZE", default=0)
     ]
     config: Annotated[str, Field(alias="NB_CONFIG", default="Neurobagel")]
+
+    @model_validator(mode="after")
+    def validate_return_agg_for_catalog_mode(self) -> Self:
+        if self.return_agg is False and self.catalog_mode is True:
+            return_agg_alias = type(self).model_fields["return_agg"].alias
+            catalog_mode_alias = type(self).model_fields["catalog_mode"].alias
+
+            logger.warning(
+                f"In the INI file, {return_agg_alias}=False is incompatible with {catalog_mode_alias}=True. "
+                "Catalog mode is an aggregate query mode intended to support dataset-level queries "
+                "when only data dictionaries are available, so no subject-level query results can be returned. "
+                f"{return_agg_alias} will be overridden to True."
+            )
+            self.return_agg = True
+        return self
 
 
 class FederationAPI(BaseService):
