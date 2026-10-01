@@ -8,6 +8,7 @@
 [![Python versions static](https://img.shields.io/badge/python-3.10--3.14-blue?style=flat-square&logo=python)](https://www.python.org)
 [![PyPI - Version](https://img.shields.io/pypi/v/configure-nb?style=flat-square&logo=pypi&link=https%3A%2F%2Fimg.shields.io%2Fpypi%2Fv%2Fconfigure-nb)](https://pypi.org/project/configure-nb/)
 [![License](https://img.shields.io/github/license/neurobagel/configure-nb?style=flat-square&color=purple&link=LICENSE)](LICENSE)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/neurobagel/configure-nb?style=flat-square&label=openssf%20scorecard)](https://scorecard.dev/viewer/?uri=github.com/neurobagel/configure-nb)
 
 </div>
 
